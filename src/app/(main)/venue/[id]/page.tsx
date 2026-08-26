@@ -76,7 +76,7 @@ export default async function VenuePage({ params }: { params: { id: string } }) 
       id,
       rating,
       comment,
-      reply,
+      venue_response,
       created_at,
       profiles (
         full_name,
@@ -157,7 +157,7 @@ export default async function VenuePage({ params }: { params: { id: string } }) 
         <div className="space-y-8">
           {/* Mini Map */}
           {venue.latitude && venue.longitude && (
-            <div className="bg-card border border-border/50 rounded-xl overflow-hidden shadow-sm">
+            <div className="bg-card border border-border/50 rounded-xl overflow-hidden shadow-xs">
               <div className="p-4 border-b border-border/50 bg-muted/30">
                 <h3 className="font-semibold flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-primary" />

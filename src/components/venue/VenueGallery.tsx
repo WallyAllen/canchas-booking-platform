@@ -2,6 +2,7 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { ChevronLeft, ChevronRight, Maximize2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -23,7 +24,7 @@ export function VenueGallery({ photos, venueName }: VenueGalleryProps) {
 
   if (!hasPhotos) {
     return (
-      <div className="w-full aspect-video md:aspect-[21/9] bg-muted flex flex-col items-center justify-center rounded-xl overflow-hidden border border-border/50">
+      <div className="w-full aspect-video md:aspect-21/9 bg-muted flex flex-col items-center justify-center rounded-xl overflow-hidden border border-border/50">
         <span className="text-6xl opacity-20 mb-2">⚽</span>
         <span className="text-muted-foreground font-medium">No hay fotos disponibles</span>
       </div>
@@ -37,14 +38,19 @@ export function VenueGallery({ photos, venueName }: VenueGalleryProps) {
         <Dialog>
           <DialogTrigger render={
             <div className="absolute inset-0 cursor-pointer">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img 
+              <Image 
                 src={displayPhotos[0]} 
                 alt={`${venueName} - Foto principal`} 
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                fill
+                sizes="(max-width: 768px) 100vw, 75vw"
+                className="object-cover transition-transform duration-500 group-hover:scale-105"
+                onError={(e) => {
+                  e.currentTarget.srcset = '';
+                  e.currentTarget.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="%23333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="background:%231a1a1a;opacity:0.2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>';
+                }}
               />
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                <div className="opacity-0 group-hover:opacity-100 bg-background/80 backdrop-blur-sm p-3 rounded-full text-foreground transition-opacity">
+                <div className="opacity-0 group-hover:opacity-100 bg-background/80 backdrop-blur-xs p-3 rounded-full text-foreground transition-opacity">
                   <Maximize2 className="h-5 w-5" />
                 </div>
               </div>
@@ -53,11 +59,16 @@ export function VenueGallery({ photos, venueName }: VenueGalleryProps) {
           <DialogContent className="max-w-4xl p-1 bg-transparent border-none shadow-none">
             <DialogTitle className="sr-only">Galería de {venueName}</DialogTitle>
             <div className="relative aspect-video w-full flex items-center justify-center">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img 
+              <Image 
                 src={displayPhotos[currentIndex]} 
                 alt={`${venueName} - Galería ${currentIndex + 1}`} 
-                className="max-w-full max-h-[80vh] object-contain rounded-lg"
+                fill
+                sizes="100vw"
+                className="object-contain rounded-lg"
+                onError={(e) => {
+                  e.currentTarget.srcset = '';
+                  e.currentTarget.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="%23333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="background:%231a1a1a;opacity:0.2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>';
+                }}
               />
               
               {displayPhotos.length > 1 && (
@@ -95,11 +106,16 @@ export function VenueGallery({ photos, venueName }: VenueGalleryProps) {
             <Dialog>
               <DialogTrigger render={
                 <div className="w-full h-full">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img 
+                  <Image 
                     src={photo} 
-                    alt={`${venueName} - Miniatura ${i + 1}`} 
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    alt={`${venueName} - Miniatura ${i + 1}`}
+                    fill
+                    sizes="(max-width: 768px) 0vw, 25vw"
+                    className="object-cover transition-transform duration-500 group-hover:scale-110"
+                    onError={(e) => {
+                      e.currentTarget.srcset = '';
+                      e.currentTarget.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" viewBox="0 0 24 24" fill="none" stroke="%23333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="background:%231a1a1a;opacity:0.2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>';
+                    }}
                   />
                   <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors" />
                   

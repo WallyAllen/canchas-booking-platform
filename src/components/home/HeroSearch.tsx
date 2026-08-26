@@ -1,16 +1,33 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { Search, MapPin, Calendar, Clock } from "lucide-react"
+import { Search, MapPin } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { DatePicker } from "@/components/ui/date-picker"
+import { TimePicker } from "@/components/ui/time-picker"
+import { format, addDays } from "date-fns"
+import gsap from "gsap"
+import { useGSAP } from "@gsap/react"
 
 export function HeroSearch() {
   const router = useRouter()
   const [query, setQuery] = useState("")
   const [date, setDate] = useState("")
   const [timeRange, setTimeRange] = useState("")
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  const todayStr = format(new Date(), "yyyy-MM-dd")
+  const tomorrowStr = format(addDays(new Date(), 1), "yyyy-MM-dd")
+
+  useGSAP(() => {
+    gsap.fromTo(
+      containerRef.current,
+      { y: 40, autoAlpha: 0 },
+      { y: 0, autoAlpha: 1, duration: 1, ease: "power3.out", delay: 0.3 }
+    )
+  }, { scope: containerRef })
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -23,7 +40,7 @@ export function HeroSearch() {
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto bg-card/80 backdrop-blur-md rounded-2xl p-2 sm:p-3 shadow-2xl border border-border/50">
+    <div ref={containerRef} className="hero-search-container w-full max-w-5xl mx-auto glass-panel rounded-2xl p-2 sm:p-3 invisible">
       <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-2">
         
         {/* Búsqueda por Zona/Nombre */}
@@ -33,7 +50,7 @@ export function HeroSearch() {
           </div>
           <Input
             type="text"
-            placeholder="Barrio, ciudad o nombre del complejo..."
+            placeholder="Buscar por nombre o zona..."
             className="pl-10 h-14 bg-background/50 border-0 focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0 text-base"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -44,42 +61,45 @@ export function HeroSearch() {
         <div className="hidden md:block w-px bg-border my-2" />
 
         {/* Fecha */}
-        <div className="relative flex-1 md:max-w-[200px] group">
-          <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
-            <Calendar className="h-5 w-5" />
+        <div className="relative flex-1 md:max-w-[340px] lg:max-w-[380px] group flex items-center bg-background/50 rounded-md p-1 gap-1 focus-within:ring-1 focus-within:ring-primary focus-within:ring-offset-0 transition-colors">
+          <Button
+            type="button"
+            variant={date === todayStr ? "secondary" : "ghost"}
+            className="flex-1 h-12 px-2 text-sm font-medium rounded-sm hover:bg-background"
+            onClick={() => setDate(todayStr)}
+          >
+            Hoy
+          </Button>
+          <Button
+            type="button"
+            variant={date === tomorrowStr ? "secondary" : "ghost"}
+            className="flex-1 h-12 px-2 text-sm font-medium rounded-sm hover:bg-background"
+            onClick={() => setDate(tomorrowStr)}
+          >
+            Mañana
+          </Button>
+          <div className="w-px h-6 bg-border/50 mx-1" />
+          <div className="flex-[1.2] min-w-0 h-12">
+            <DatePicker
+              value={date}
+              onChange={setDate}
+              placeholder="Fecha"
+              className="h-full w-full bg-transparent hover:bg-background border-0 shadow-none text-sm font-medium px-2 rounded-sm"
+            />
           </div>
-          <Input
-            type="date"
-            className="pl-10 h-14 bg-background/50 border-0 focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0 text-base cursor-pointer [color-scheme:dark]"
-            value={date}
-            min={new Date().toISOString().split("T")[0]}
-            onChange={(e) => setDate(e.target.value)}
-          />
         </div>
 
         {/* Separador Desktop */}
         <div className="hidden md:block w-px bg-border my-2" />
 
         {/* Franja Horaria */}
-        <div className="relative flex-1 md:max-w-[200px] group">
-          <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-muted-foreground group-focus-within:text-primary transition-colors">
-            <Clock className="h-5 w-5" />
-          </div>
-          <select
-            className="w-full h-14 pl-10 pr-8 rounded-md bg-background/50 border-0 focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-0 text-base appearance-none outline-none focus:outline-none transition-colors"
+        <div className="relative flex-1 md:max-w-[200px] group flex items-center h-14">
+          <TimePicker
             value={timeRange}
-            onChange={(e) => setTimeRange(e.target.value)}
-          >
-            <option value="" className="bg-background text-foreground">Cualquier horario</option>
-            <option value="morning" className="bg-background text-foreground">Mañana (08:00 - 13:00)</option>
-            <option value="afternoon" className="bg-background text-foreground">Tarde (13:00 - 18:00)</option>
-            <option value="evening" className="bg-background text-foreground">Noche (18:00 - 00:00)</option>
-          </select>
-          <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none text-muted-foreground">
-            <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M4.93179 5.43179C4.75605 5.60753 4.75605 5.89245 4.93179 6.06819L7.43179 8.56819C7.60753 8.74393 7.89245 8.74393 8.06819 8.56819L10.5682 6.06819C10.7439 5.89245 10.7439 5.60753 10.5682 5.43179C10.3925 5.25605 10.1075 5.25605 9.93179 5.43179L7.75 7.61358L5.56819 5.43179C5.39245 5.25605 5.10753 5.25605 4.93179 5.43179Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path>
-            </svg>
-          </div>
+            onChange={setTimeRange}
+            placeholder="Cualquier hora"
+            className="h-full w-full bg-background/50 text-base rounded-md"
+          />
         </div>
 
         {/* Botón Buscar */}

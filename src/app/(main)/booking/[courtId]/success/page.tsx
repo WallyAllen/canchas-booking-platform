@@ -30,7 +30,9 @@ export default async function BookingSuccessPage({
         name,
         venues (
           name,
-          address
+          address,
+          require_deposit,
+          deposit_percentage
         )
       )
     `)
@@ -49,7 +51,6 @@ export default async function BookingSuccessPage({
 
   const dateObj = new Date(`${booking.booking_date}T12:00:00`)
   const displayDate = dateObj.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })
-  const deposit = Math.ceil(booking.total_price * 0.3)
 
   return (
     <div className="container max-w-2xl mx-auto px-4 py-12 md:py-20">
@@ -85,10 +86,12 @@ export default async function BookingSuccessPage({
             </div>
           </div>
 
-          <div className="flex justify-between items-center text-sm px-2">
-            <span className="text-muted-foreground">Seña abonada:</span>
-            <span className="font-bold text-primary">${deposit.toLocaleString('es-AR')}</span>
-          </div>
+          {booking.courts.venues.require_deposit && (
+            <div className="flex justify-between items-center text-sm px-2">
+              <span className="text-muted-foreground">Seña abonada:</span>
+              <span className="font-bold text-primary">${Math.ceil(booking.total_price * ((booking.courts.venues.deposit_percentage || 30) / 100)).toLocaleString('es-AR')}</span>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
             <Button variant="outline" className="w-full" render={

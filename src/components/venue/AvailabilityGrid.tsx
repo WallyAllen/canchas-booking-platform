@@ -111,7 +111,7 @@ export function AvailabilityGrid({ venueId, courts }: AvailabilityGridProps) {
 
       <div className="relative border border-border/50 rounded-xl overflow-hidden bg-card">
         {loading && (
-          <div className="absolute inset-0 z-10 bg-background/50 backdrop-blur-sm flex items-center justify-center">
+          <div className="absolute inset-0 z-10 bg-background/50 backdrop-blur-xs flex items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         )}
@@ -120,7 +120,7 @@ export function AvailabilityGrid({ venueId, courts }: AvailabilityGridProps) {
           <table className="w-full text-sm text-left border-collapse min-w-[800px]">
             <thead className="bg-muted/50 text-xs uppercase">
               <tr>
-                <th className="px-4 py-3 font-medium w-[200px] border-b border-r border-border/50 sticky left-0 bg-muted/90 backdrop-blur z-20">
+                <th className="px-4 py-3 font-medium w-[200px] border-b border-r border-border/50 sticky left-0 bg-muted/90 backdrop-blur-sm z-20">
                   Cancha
                 </th>
                 {hours.map((hour) => (

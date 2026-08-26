@@ -29,7 +29,7 @@ export async function cancelBooking(bookingId: string) {
   const { error: updateError } = await (supabase.from("bookings") as any)
     .update({ 
       status: 'cancelled',
-      updated_at: new Date().toISOString() 
+      cancelled_at: new Date().toISOString() 
     })
     .eq("id", bookingId)
 
@@ -37,7 +37,7 @@ export async function cancelBooking(bookingId: string) {
 
   // 4. Si corresponde crédito, lo creamos
   if (policy.refundType === 'credit' && policy.creditAmount > 0) {
-    await createCredit(user.id, booking.id, policy.creditAmount)
+    await createCredit(user.id, booking.id, booking.courts.venues.id, policy.creditAmount)
   }
   
   // 5. Notificar
@@ -88,8 +88,7 @@ export async function rescheduleBooking(bookingId: string, newDate: string, newT
   const { error: updateError } = await (supabase.from("bookings") as any)
     .update({ 
       booking_date: newDate,
-      start_time: newTime,
-      updated_at: new Date().toISOString() 
+      start_time: newTime
     })
     .eq("id", bookingId)
 

@@ -185,7 +185,7 @@ export interface Database {
           deposit_amount: number
           deposit_method: 'mercadopago' | 'transfer' | 'cash'
           payment_status: 'pending' | 'paid' | 'refunded' | 'credited'
-          booking_status: 'confirmed' | 'cancelled' | 'completed' | 'no_show'
+          status: 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no_show'
           source: 'platform' | 'manual'
           mp_payment_id: string | null
           created_at: string
@@ -202,7 +202,7 @@ export interface Database {
           deposit_amount: number
           deposit_method?: 'mercadopago' | 'transfer' | 'cash'
           payment_status?: 'pending' | 'paid' | 'refunded' | 'credited'
-          booking_status?: 'confirmed' | 'cancelled' | 'completed' | 'no_show'
+          status?: 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no_show'
           source?: 'platform' | 'manual'
           mp_payment_id?: string | null
           created_at?: string
@@ -219,7 +219,7 @@ export interface Database {
           deposit_amount?: number
           deposit_method?: 'mercadopago' | 'transfer' | 'cash'
           payment_status?: 'pending' | 'paid' | 'refunded' | 'credited'
-          booking_status?: 'confirmed' | 'cancelled' | 'completed' | 'no_show'
+          status?: 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no_show'
           source?: 'platform' | 'manual'
           mp_payment_id?: string | null
           created_at?: string

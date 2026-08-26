@@ -46,3 +46,10 @@ analisis_ideas_futuras.md
 goals.md
 implementation_plan.md
 .cursorignore
+
+# Scratch and local Python envs
+.venv/
+scratch/
+scrape-test/
+fix_stats.py
+

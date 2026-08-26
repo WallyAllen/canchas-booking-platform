@@ -29,7 +29,7 @@ export function Footer() {
             <p className="text-sm text-muted-foreground">
               Gestioná tus reservas, pagos y clientes desde un solo lugar.
             </p>
-            <Link href="/unite" className="text-sm font-medium text-primary hover:underline">
+            <Link href="/dashboard" className="text-sm font-medium text-primary hover:underline">
               ¿Tenés una cancha? Sumala gratis &rarr;
             </Link>
           </div>

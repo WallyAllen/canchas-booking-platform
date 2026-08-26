@@ -2,8 +2,9 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { Card,} from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus } from "lucide-react"
+
+import { ScheduleNavigation } from "@/components/dashboard/schedule/ScheduleNavigation"
+import { ManualBookingModal } from "@/components/dashboard/schedule/ManualBookingModal"
 
 export const dynamic = 'force-dynamic'
 
@@ -45,15 +46,8 @@ export default async function SchedulePage({
           <p className="text-muted-foreground">Gestiona la grilla horaria de tus canchas.</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon"><ChevronLeft className="h-4 w-4" /></Button>
-          <Button variant="outline" className="min-w-[140px] justify-center">
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {currentDate}
-          </Button>
-          <Button variant="outline" size="icon"><ChevronRight className="h-4 w-4" /></Button>
-          <Button className="ml-2">
-            <Plus className="mr-2 h-4 w-4" /> Nuevo Turno
-          </Button>
+          <ScheduleNavigation currentDate={currentDate} />
+          <ManualBookingModal courts={venue.courts} currentDate={currentDate} />
         </div>
       </div>
 
@@ -104,13 +98,13 @@ export default async function SchedulePage({
                         return (
                           <div 
                             key={booking.id}
-                            className={`absolute top-2 bottom-2 rounded-md border p-2 text-xs overflow-hidden cursor-pointer shadow-sm ${statusColor}`}
+                            className={`absolute top-2 bottom-2 rounded-md border p-2 text-xs overflow-hidden cursor-pointer shadow-xs ${statusColor}`}
                             style={{ 
                               left: `calc(${(index / hours.length) * 100}% + 4px)`, 
                               width: `calc(${(1 / hours.length) * 100}% - 8px)`
                             }}
                           >
-                            <div className="font-bold truncate">{booking.profiles?.full_name || 'Sin Nombre'}</div>
+                            <div className="font-bold truncate">{booking.manual_client_name || booking.profiles?.full_name || 'Sin Nombre'}</div>
                             <div className="truncate">{booking.start_time.substring(0, 5)} hs</div>
                           </div>
                         )

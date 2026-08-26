@@ -48,38 +48,50 @@ export function CreditsList({ userId }: { userId: string }) {
           ${availableCredits.toLocaleString('es-AR')}
         </div>
         
-        <div className="space-y-3 mt-6 max-h-[250px] overflow-y-auto pr-2">
-          {credits.length > 0 ? credits.map((credit: any) => {
-            const isAvailable = credit.status === 'available'
-            const isUsed = credit.status === 'used'
-            
-            return (
-              <div key={credit.id} className={`p-3 rounded-md border ${isAvailable ? 'bg-background' : 'bg-muted/50'}`}>
-                <div className="flex justify-between items-start mb-1">
-                  <div className="font-bold">${credit.amount.toLocaleString('es-AR')}</div>
-                  <Badge variant={isAvailable ? 'default' : 'secondary'} className={isAvailable ? 'bg-green-500 hover:bg-green-600 text-white' : ''}>
-                    {isAvailable ? 'Disponible' : isUsed ? 'Usado' : 'Expirado'}
-                  </Badge>
+        <div className="space-y-4 mt-6 max-h-[400px] overflow-y-auto pr-2">
+          {credits.length > 0 ? (
+            Object.entries(
+              credits.reduce((acc: any, credit: any) => {
+                const venueName = credit.bookings?.courts?.venues?.name || "Complejo Desconocido"
+                if (!acc[venueName]) acc[venueName] = { available: 0, list: [] }
+                if (credit.status === 'available') {
+                  acc[venueName].available += credit.amount
+                }
+                acc[venueName].list.push(credit)
+                return acc
+              }, {})
+            ).map(([venueName, data]: [string, any]) => (
+              <div key={venueName} className="border rounded-lg p-4 bg-background">
+                <div className="flex justify-between items-center mb-3 border-b pb-2">
+                  <h4 className="font-semibold">{venueName}</h4>
+                  <span className="font-bold text-green-600">${data.available.toLocaleString('es-AR')}</span>
                 </div>
-                
-                {credit.bookings?.courts?.name && (
-                  <div className="text-xs text-muted-foreground line-clamp-1 mb-1">
-                    Por cancelación en {credit.bookings.courts.venues?.name}
-                  </div>
-                )}
-                
-                <div className="flex items-center text-[10px] text-muted-foreground">
-                  <Clock className="h-3 w-3 mr-1" />
-                  {isAvailable ? (
-                    <span>Vence el {new Date(credit.expires_at).toLocaleDateString('es-AR')}</span>
-                  ) : (
-                    <span>{isUsed ? 'Usado' : 'Expirado'} el {new Date(credit.expires_at).toLocaleDateString('es-AR')}</span>
-                  )}
+                <div className="space-y-2">
+                  {data.list.map((credit: any) => {
+                    const isAvailable = credit.status === 'available'
+                    const isUsed = credit.status === 'used'
+                    
+                    return (
+                      <div key={credit.id} className="flex justify-between items-center text-sm">
+                        <div className="flex items-center gap-2">
+                          <Badge variant={isAvailable ? 'default' : 'secondary'} className={`text-[10px] px-1 py-0 ${isAvailable ? 'bg-green-500 hover:bg-green-600' : ''}`}>
+                            {isAvailable ? 'Disponible' : isUsed ? 'Usado' : 'Vencido'}
+                          </Badge>
+                          <span className="text-muted-foreground text-xs">
+                            {isAvailable ? `Vence: ${new Date(credit.expires_at).toLocaleDateString('es-AR')}` : ''}
+                          </span>
+                        </div>
+                        <span className={isAvailable ? 'font-medium' : 'text-muted-foreground line-through'}>
+                          ${credit.amount.toLocaleString('es-AR')}
+                        </span>
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
-            )
-          }) : (
-            <p className="text-sm text-muted-foreground text-center py-4">No tienes historial de créditos.</p>
+            ))
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-4">No tienes saldo a favor en ningún complejo.</p>
           )}
         </div>
       </CardContent>

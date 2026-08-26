@@ -30,7 +30,7 @@ export async function POST(request: Request) {
 
     // Inicializar MP
     const client = new MercadoPagoConfig({ 
-      accessToken: process.env.MP_ACCESS_TOKEN || 'TEST-dummy-token' 
+      accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN || 'TEST-dummy-token' 
     })
     const payment = new Payment(client)
     

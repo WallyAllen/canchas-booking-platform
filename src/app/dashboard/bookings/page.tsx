@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
+import { BookingActions } from "@/components/dashboard/bookings/BookingActions"
 
 export const dynamic = 'force-dynamic'
 
@@ -82,7 +82,7 @@ export default async function VenueBookingsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-muted-foreground">
-                      <Button variant="ghost" size="sm">Ver Detalles</Button>
+                      <BookingActions bookingId={booking.id} status={booking.status} paymentStatus={booking.payment_status} />
                     </td>
                   </tr>
                 )) : (

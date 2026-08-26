@@ -2,7 +2,7 @@ import { MercadoPagoConfig, Preference } from 'mercadopago'
 
 // Initialize MercadoPago Client
 const client = new MercadoPagoConfig({ 
-  accessToken: process.env.MP_ACCESS_TOKEN || 'TEST-dummy-token',
+  accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN || 'TEST-dummy-token',
   options: { timeout: 5000, idempotencyKey: 'abc' }
 })
 
@@ -18,6 +18,15 @@ export async function createPaymentPreference({ title, price, bookingId, courtId
 
   // Webhook URL has to be absolute, assuming PROD_URL exists or using localhost for development
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+
+  if (!process.env.MERCADOPAGO_ACCESS_TOKEN || process.env.MERCADOPAGO_ACCESS_TOKEN.startsWith('TEST-')) {
+    console.log("Mocking Mercado Pago payment due to missing or TEST- token")
+    return {
+      id: "mock_preference_id_" + bookingId,
+      init_point: `/mock-payment?booking_id=${bookingId}&court_id=${courtId}&price=${price}`,
+      sandbox_init_point: `/mock-payment?booking_id=${bookingId}&court_id=${courtId}&price=${price}`
+    }
+  }
 
   try {
     const result = await preference.create({

@@ -72,13 +72,14 @@ export default async function BookingPage({
 
   // 4. Verificar disponibilidad (que no exista un booking pagado/confirmado/pendiente para ese slot)
   const { data: existingBookings } = await (supabase.from("bookings") as any)
-    .select("id")
+    .select("*")
     .eq("court_id", court.id)
     .eq("booking_date", date)
-    .eq("start_time", time)
+    .eq("start_time", `${timeStr}:00`)
     .neq("status", "cancelled")
     
-  const isAvailable = !existingBookings || existingBookings.length === 0
+  let booking = existingBookings && existingBookings.length > 0 ? existingBookings[0] : null;
+  const isAvailable = !booking || (booking.user_id === user.id && booking.payment_status === "pending");
 
   if (!isAvailable) {
     return (
@@ -87,7 +88,7 @@ export default async function BookingPage({
           <span className="text-4xl mb-4 block">😔</span>
           <h2 className="text-2xl font-bold mb-2">Turno Ocupado</h2>
           <p className="text-muted-foreground mb-6">Alguien más reservó este turno hace unos instantes.</p>
-          <a href={`/venue/${court.venue_id}`} className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-8 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90">
+          <a href={`/venue/${court.venue_id}`} className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-8 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90">
             Ver otros horarios
           </a>
         </div>
@@ -95,34 +96,50 @@ export default async function BookingPage({
     )
   }
 
-  // 5. Generar un Booking temporal (Pending) para poder crear la preferencia de pago
-  const { data: booking, error: insertError } = await (supabase.from("bookings") as any)
-    .insert({
-      user_id: user.id,
-      court_id: court.id,
-      booking_date: date,
-      start_time: time,
-      end_time: "23:59:00", // En MVP es de 1h pero simplificamos
-      total_price: price,
-      payment_status: "pending",
-      booking_status: "pending"
-    })
-    .select()
-    .single()
+  const requireDeposit = court.venues?.require_deposit ?? true
+  const depositPercentage = court.venues?.deposit_percentage ?? 30
+  const depositAmount = requireDeposit ? Math.ceil((price * depositPercentage) / 100) : 0
 
-  if (insertError) {
-    console.error("Error creating temporary booking:", insertError)
-    return <div>Error al iniciar reserva.</div>
+  if (!booking) {
+    // 5. Generar un Booking temporal (Pending) para poder crear la preferencia de pago
+    const { data: newBooking, error: insertError } = await (supabase.from("bookings") as any)
+      .insert({
+        user_id: user.id,
+        court_id: court.id,
+        booking_date: date,
+        start_time: `${timeStr}:00`,
+        end_time: "23:59:00", // En MVP es de 1h pero simplificamos
+        total_price: price,
+        payment_status: "pending",
+        status: "pending"
+      })
+      .select()
+      .single()
+
+    if (insertError) {
+      console.error("Error creating temporary booking:", insertError)
+      return (
+        <div className="container py-20 text-center">
+          <h2 className="text-2xl font-bold mb-4">Error al iniciar reserva</h2>
+          <p className="text-muted-foreground mb-4">Hubo un problema al procesar tu solicitud.</p>
+          <a href={`/venue/${court.venue_id}`} className="text-primary hover:underline">Volver al complejo</a>
+        </div>
+      )
+    }
+    booking = newBooking
   }
 
   const bookingData = {
     id: booking.id,
+    courtId: court.id,
     courtName: court.name,
     venueName: court.venues.name,
     date,
     time: timeStr,
     price,
-    isPromo
+    isPromo,
+    requireDeposit,
+    depositAmount
   }
 
   return (

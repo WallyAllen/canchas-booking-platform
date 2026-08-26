@@ -79,7 +79,7 @@ function LoginForm() {
       {/* Background accents */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-3xl pointer-events-none" />
       
-      <Card className="w-full max-w-md relative z-10 border-border bg-card/50 backdrop-blur-sm">
+      <Card className="w-full max-w-md relative z-10 border-border bg-card/50 backdrop-blur-xs">
         <CardHeader className="space-y-4 text-center">
           <div className="flex justify-center">
             <span className="text-4xl">⚽</span>

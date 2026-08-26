@@ -107,7 +107,7 @@ export function ReviewSection({ venueId, avgRating, reviewCount, reviews }: Revi
                       <button
                         key={star}
                         onClick={() => setRating(star)}
-                        className="p-1 focus:outline-none"
+                        className="p-1 focus:outline-hidden"
                       >
                         <Star className={`h-8 w-8 transition-colors ${rating >= star ? 'fill-yellow-400 text-yellow-400' : 'text-muted'}`} />
                       </button>

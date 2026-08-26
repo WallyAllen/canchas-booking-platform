@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createClient } from "@/lib/supabase/server"
+import Image from "next/image"
 import { redirect } from "next/navigation"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent } from "@/components/ui/card"
@@ -58,19 +59,20 @@ export default async function BookingsPage() {
   const renderBookingCard = (booking: any, isPast: boolean) => {
     const dateObj = new Date(`${booking.booking_date}T12:00:00`)
     const displayDate = dateObj.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' })
-    const statusLabel = booking.status === 'cancelled' ? 'Cancelada' : isPast ? 'Completada' : 'Confirmada'
-    const statusColor = booking.status === 'cancelled' ? 'bg-destructive/10 text-destructive' : isPast ? 'bg-muted text-muted-foreground' : 'bg-green-500/10 text-green-500'
+    const statusLabel = booking.status === 'cancelled' ? 'Cancelada' : booking.status === 'pending' ? 'Pendiente' : isPast ? 'Completada' : 'Confirmada'
+    const statusColor = booking.status === 'cancelled' ? 'bg-destructive/10 text-destructive' : booking.status === 'pending' ? 'bg-orange-500/10 text-orange-500' : isPast ? 'bg-muted text-muted-foreground' : 'bg-green-500/10 text-green-500'
 
     return (
       <Card key={booking.id} className="overflow-hidden border-border/50 bg-card/50 hover:bg-card transition-colors">
         <div className="flex flex-col sm:flex-row h-full">
           <div className="hidden sm:block w-48 relative bg-muted shrink-0">
             {booking.courts.venues.photos && booking.courts.venues.photos[0] ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img 
+              <Image 
                 src={booking.courts.venues.photos[0]} 
                 alt="Venue" 
-                className="w-full h-full object-cover"
+                fill
+                sizes="(max-width: 640px) 0vw, 192px"
+                className="object-cover"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">⚽</div>

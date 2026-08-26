@@ -35,6 +35,7 @@ export default async function SearchPage({
       photos,
       latitude,
       longitude,
+      require_deposit,
       courts (
         type,
         surface,
@@ -83,13 +84,16 @@ export default async function SearchPage({
 
       if (venueMinPrice === Infinity) venueMinPrice = 0
 
+      const requireDepositFilter = searchParams.requireDeposit === 'true' ? true : searchParams.requireDeposit === 'false' ? false : null
+
       const hasMatchingType = !type || typesSet.has(type)
       const hasMatchingSurface = !surface || surfacesSet.has(surface)
       const hasMatchingPrice = 
         (!minPrice || venueMaxPrice >= minPrice) && 
         (maxPrice === Infinity || venueMinPrice <= maxPrice)
+      const hasMatchingDeposit = requireDepositFilter === null || venue.require_deposit === requireDepositFilter
 
-      if (hasMatchingType && hasMatchingSurface && hasMatchingPrice) {
+      if (hasMatchingType && hasMatchingSurface && hasMatchingPrice && hasMatchingDeposit) {
         filteredVenues.push({
           id: venue.id,
           name: venue.name,
@@ -101,15 +105,25 @@ export default async function SearchPage({
           latitude: venue.latitude,
           longitude: venue.longitude,
           min_price: venueMinPrice,
-          court_types: Array.from(typesSet)
+          court_types: Array.from(typesSet),
+          require_deposit: venue.require_deposit
         })
       }
     })
   }
 
-  // TODO: Sort by distance if user geolocation is provided via some param or header.
-  // For now, default sort by rating descending.
-  filteredVenues.sort((a, b) => b.avg_rating - a.avg_rating)
+  // Sorting logic based on sort param
+  const sortParam = typeof searchParams.sort === 'string' ? searchParams.sort : 'rating'
+  
+  filteredVenues.sort((a, b) => {
+    if (sortParam === 'price_asc') {
+      return a.min_price - b.min_price
+    } else if (sortParam === 'price_desc') {
+      return b.min_price - a.min_price
+    }
+    // default to rating
+    return b.avg_rating - a.avg_rating
+  })
 
   return <SearchLayout venues={filteredVenues} />
 }

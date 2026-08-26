@@ -4,7 +4,9 @@ import { redirect } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { MapPin, Settings2, Plus } from "lucide-react"
+import { MapPin } from "lucide-react"
+import { CourtFormModal } from "@/components/dashboard/courts/CourtFormModal"
+import { PricingModal } from "@/components/dashboard/courts/PricingModal"
 
 export const dynamic = 'force-dynamic'
 
@@ -32,9 +34,7 @@ export default async function CourtsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Mis Canchas</h1>
           <p className="text-muted-foreground">Administra las canchas, superficies y reglas de precios.</p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" /> Agregar Cancha
-        </Button>
+        <CourtFormModal />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -64,13 +64,11 @@ export default async function CourtsPage() {
                   <div className="font-medium">{court.slot_duration_minutes} min</div>
                 </div>
 
-                <div className="pt-4 border-t flex gap-2">
+                <div className="pt-4 border-t grid grid-cols-2 gap-2">
                   <Button variant="outline" size="sm" className="w-full">
                     Editar
                   </Button>
-                  <Button variant="secondary" size="sm" className="w-full">
-                    <Settings2 className="mr-2 h-4 w-4" /> Precios
-                  </Button>
+                  <PricingModal courtId={court.id} />
                 </div>
               </div>
             </CardContent>
@@ -80,9 +78,7 @@ export default async function CourtsPage() {
             <MapPin className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
             <h3 className="text-lg font-medium mb-1">No tienes canchas creadas</h3>
             <p className="text-muted-foreground mb-4">Crea tu primera cancha para empezar a recibir reservas.</p>
-            <Button variant="outline">
-              <Plus className="mr-2 h-4 w-4" /> Agregar Cancha
-            </Button>
+            <CourtFormModal />
           </div>
         )}
       </div>

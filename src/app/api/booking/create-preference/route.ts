@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createPaymentPreference } from '@/lib/mercadopago/client'
-import { calculateDeposit } from '@/lib/mercadopago/helpers'
+
 import { getAvailableCredits, applyCredits } from '@/lib/credits/manager'
 
 export async function POST(request: Request) {
@@ -18,18 +18,31 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing parameters' }, { status: 400 })
     }
 
-    const depositAmount = calculateDeposit(price)
+    const { data: court } = await (supabase.from('courts') as any)
+      .select('venue_id, venues(require_deposit, deposit_percentage)')
+      .eq('id', courtId)
+      .single()
+
+    if (!court) {
+      return NextResponse.json({ error: 'Cancha no encontrada' }, { status: 404 })
+    }
+
+    const venueId = court.venue_id
+    const requireDeposit = court.venues?.require_deposit ?? true
+    const depositPercentage = court.venues?.deposit_percentage ?? 30
+
+    // Check credits for this specific venue
+    const credits = await getAvailableCredits(user.id, venueId)
     
-    // Check credits
-    const credits = await getAvailableCredits(user.id)
+    // Si no requiere seña, el deposit amount es 0
+    const depositAmount = requireDeposit ? Math.ceil((price * depositPercentage) / 100) : 0
     let amountToPay = depositAmount
 
-    if (credits > 0) {
+    if (credits > 0 && amountToPay > 0) {
       amountToPay = credits >= depositAmount ? 0 : depositAmount - credits
       
       // MVP: Consumimos los créditos ahora mismo. Si falla MP, el admin tendrá que devolverlos manualmente.
-      // (Una mejor arquitectura reservaría los créditos en estado 'pending')
-      await applyCredits(user.id, bookingId, Math.min(credits, depositAmount))
+      await applyCredits(user.id, bookingId, venueId, Math.min(credits, depositAmount))
     }
 
     // Si con los créditos se cubrió el 100% de la seña, confirmamos directo

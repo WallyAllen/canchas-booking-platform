@@ -6,18 +6,20 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { calculateDeposit } from "@/lib/mercadopago/helpers"
 import { CheckCircle2, ChevronRight, MapPin, Calendar, Clock, CreditCard, Banknote } from "lucide-react"
 
 interface BookingWizardProps {
   booking: {
     id: string
+    courtId: string
     courtName: string
     venueName: string
     date: string
     time: string
     price: number
     isPromo: boolean
+    requireDeposit: boolean
+    depositAmount: number
   }
 }
 
@@ -27,7 +29,7 @@ export function BookingWizard({ booking }: BookingWizardProps) {
   const [loading, setLoading] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<'mercadopago' | 'transfer'>('mercadopago')
 
-  const depositAmount = calculateDeposit(booking.price)
+  const { depositAmount, requireDeposit } = booking
   const remainingAmount = booking.price - depositAmount
 
   const handleNext = () => setStep(step + 1)
@@ -42,10 +44,10 @@ export function BookingWizard({ booking }: BookingWizardProps) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            title: `Seña - ${booking.courtName} - ${booking.date}`,
+            title: `Reserva - ${booking.courtName} - ${booking.date}`,
             price: booking.price,
             bookingId: booking.id,
-            courtId: booking.courtName // Should be court ID but this is MVP
+            courtId: booking.courtId
           })
         })
         
@@ -125,13 +127,19 @@ export function BookingWizard({ booking }: BookingWizardProps) {
               </div>
             </div>
 
-            <div className="flex gap-4">
-              <Button variant="outline" className="w-full" onClick={() => router.back()}>
+            <div className="grid grid-cols-2 gap-4">
+              <Button variant="outline" className="w-full" onClick={() => router.back()} disabled={loading}>
                 Cancelar
               </Button>
-              <Button className="w-full" onClick={handleNext}>
-                Continuar <ChevronRight className="w-4 h-4 ml-1" />
-              </Button>
+              {requireDeposit ? (
+                <Button className="w-full" onClick={handleNext}>
+                  Continuar <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              ) : (
+                <Button className="w-full" onClick={handlePayment} disabled={loading}>
+                  {loading ? "Confirmando..." : "Confirmar Reserva"}
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -186,7 +194,7 @@ export function BookingWizard({ booking }: BookingWizardProps) {
               </div>
             </div>
 
-            <div className="flex gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <Button variant="outline" className="w-full" onClick={handleBack}>
                 Volver
               </Button>

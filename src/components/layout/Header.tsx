@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { Menu, User as UserIcon } from "lucide-react"
 
 import { useUser } from "@/hooks/useUser"
@@ -21,11 +21,13 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 export function Header() {
   const pathname = usePathname()
+  const router = useRouter()
   const { user, profile, isLoading, signOut } = useUser()
   const [isOpen, setIsOpen] = React.useState(false)
 
@@ -37,9 +39,15 @@ export function Header() {
   if (user) {
     navItems.push({ name: "Mis Reservas", href: "/bookings" })
   }
+  if (profile?.role === 'venue_admin' || profile?.role === 'platform_admin') {
+    navItems.push({ name: "Panel de Cancha", href: "/dashboard" })
+  }
+  if (profile?.role === 'platform_admin') {
+    navItems.push({ name: "Panel Admin", href: "/admin" })
+  }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-sm supports-backdrop-filter:bg-background/60">
       <div className="container flex h-16 items-center justify-between px-4 md:px-8">
         <div className="flex gap-6 md:gap-10">
           <Link href="/" className="flex items-center space-x-2">
@@ -76,26 +84,28 @@ export function Header() {
                 </Button>
               } />
               <DropdownMenuContent className="w-56" align="end">
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{profile?.full_name || user.email}</p>
-                    <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-                  </div>
-                </DropdownMenuLabel>
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">{profile?.full_name || user.email}</p>
+                      <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                    </div>
+                  </DropdownMenuLabel>
+                </DropdownMenuGroup>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem render={<Link href="/profile" />}>
+                <DropdownMenuItem onSelect={() => router.push("/profile")}>
                   Mi Perfil
                 </DropdownMenuItem>
-                <DropdownMenuItem render={<Link href="/bookings" />}>
+                <DropdownMenuItem onSelect={() => router.push("/bookings")}>
                   Mis Reservas
                 </DropdownMenuItem>
-                {profile?.role === 'venue_admin' && (
-                  <DropdownMenuItem render={<Link href="/dashboard" />}>
+                {(profile?.role === 'venue_admin' || profile?.role === 'platform_admin') && (
+                  <DropdownMenuItem onSelect={() => router.push("/dashboard")}>
                     Panel de Cancha
                   </DropdownMenuItem>
                 )}
                 {profile?.role === 'platform_admin' && (
-                  <DropdownMenuItem render={<Link href="/admin" />}>
+                  <DropdownMenuItem onSelect={() => router.push("/admin")}>
                     Panel Admin
                   </DropdownMenuItem>
                 )}
@@ -110,7 +120,7 @@ export function Header() {
               <Button variant="ghost" render={<Link href="/login" />}>
                 Iniciar Sesión
               </Button>
-              <Button render={<Link href="/register" />}>
+              <Button render={<Link href="/login" />}>
                 Registrarse
               </Button>
             </div>
@@ -148,7 +158,7 @@ export function Header() {
                     <Link href="/login" onClick={() => setIsOpen(false)} className="text-foreground/70 hover:text-foreground">
                       Iniciar Sesión
                     </Link>
-                    <Link href="/register" onClick={() => setIsOpen(false)} className="text-foreground/70 hover:text-foreground">
+                    <Link href="/login" onClick={() => setIsOpen(false)} className="text-foreground/70 hover:text-foreground">
                       Registrarse
                     </Link>
                   </>

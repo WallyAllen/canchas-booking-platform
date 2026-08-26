@@ -14,6 +14,7 @@ export interface SearchVenueItem {
   longitude: number | null
   min_price: number
   court_types: string[]
+  require_deposit?: boolean
 }
 
 interface VenueListProps {
@@ -52,7 +53,8 @@ export function VenueList({ venues, onHoverVenue }: VenueListProps) {
               city: venue.city,
               avg_rating: venue.avg_rating,
               review_count: venue.review_count,
-              featured_image: venue.featured_image
+              featured_image: venue.featured_image,
+              require_deposit: venue.require_deposit
             }}
             minPrice={venue.min_price}
             courtTypes={venue.court_types}

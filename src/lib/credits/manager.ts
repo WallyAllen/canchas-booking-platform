@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { createClient } from "@/lib/supabase/server"
+import { createClient, createAdminClient } from "@/lib/supabase/server"
 
 export function calculateCancellationPolicy(booking: any) {
   const now = new Date()
@@ -50,8 +50,8 @@ export function canReschedule(booking: any) {
   return { allowed: false, reason: 'Reprogramación no permitida con menos de 2 horas de anticipación.' }
 }
 
-export async function createCredit(userId: string, bookingId: string, amount: number) {
-  const supabase = await createClient()
+export async function createCredit(userId: string, bookingId: string, venueId: string, amount: number) {
+  const supabase = createAdminClient()
   
   const expiresAt = new Date()
   expiresAt.setDate(expiresAt.getDate() + 90) // 90 días de validez
@@ -60,6 +60,7 @@ export async function createCredit(userId: string, bookingId: string, amount: nu
     .insert({
       user_id: userId,
       booking_id: bookingId,
+      venue_id: venueId,
       amount,
       expires_at: expiresAt.toISOString(),
       status: 'available'
@@ -75,13 +76,14 @@ export async function createCredit(userId: string, bookingId: string, amount: nu
   return data
 }
 
-export async function getAvailableCredits(userId: string) {
+export async function getAvailableCredits(userId: string, venueId: string) {
   const supabase = await createClient()
   const now = new Date().toISOString()
   
   const { data, error } = await (supabase.from('credits') as any)
     .select('*')
     .eq('user_id', userId)
+    .eq('venue_id', venueId)
     .eq('status', 'available')
     .gt('expires_at', now)
 
@@ -94,7 +96,7 @@ export async function getAvailableCredits(userId: string) {
   return credits.reduce((acc: number, curr: any) => acc + curr.amount, 0)
 }
 
-export async function applyCredits(userId: string, bookingId: string, amountToApply: number) {
+export async function applyCredits(userId: string, bookingId: string, venueId: string, amountToApply: number) {
   const supabase = await createClient()
   const now = new Date().toISOString()
   
@@ -102,6 +104,7 @@ export async function applyCredits(userId: string, bookingId: string, amountToAp
   const { data: credits, error } = await (supabase.from('credits') as any)
     .select('*')
     .eq('user_id', userId)
+    .eq('venue_id', venueId)
     .eq('status', 'available')
     .gt('expires_at', now)
     .order('expires_at', { ascending: true }) // Consumimos los que expiran primero

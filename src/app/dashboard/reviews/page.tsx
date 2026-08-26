@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createClient } from "@/lib/supabase/server"
+import Image from "next/image"
 import { redirect } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Star, MessageCircle } from "lucide-react"
@@ -65,10 +66,9 @@ export default async function ReviewsPage() {
             <CardContent className="p-6">
               <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center overflow-hidden">
+                  <div className="relative w-10 h-10 rounded-full bg-muted flex items-center justify-center overflow-hidden">
                     {review.profiles?.avatar_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={review.profiles.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                      <Image src={review.profiles.avatar_url} alt="Avatar" fill sizes="40px" className="object-cover" />
                     ) : (
                       <span className="font-semibold text-muted-foreground">{review.profiles?.full_name?.charAt(0) || 'U'}</span>
                     )}
