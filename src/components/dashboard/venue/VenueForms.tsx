@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button"
 import { updateVenueProfile, updateVenuePaymentSettings } from "@/app/dashboard/venue/actions"
 import { CardContent } from "@/components/ui/card"
 
+import { LocationPicker } from "./LocationPicker"
+
 export function VenueProfileForm({ venue }: { venue: any }) {
   const [loading, setLoading] = useState(false)
 
@@ -55,6 +57,8 @@ export function VenueProfileForm({ venue }: { venue: any }) {
 
 export function VenueLocationForm({ venue }: { venue: any }) {
   const [loading, setLoading] = useState(false)
+  const [lat, setLat] = useState<number | undefined>(venue.latitude || undefined)
+  const [lng, setLng] = useState<number | undefined>(venue.longitude || undefined)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -76,6 +80,9 @@ export function VenueLocationForm({ venue }: { venue: any }) {
         <input type="hidden" name="name" value={venue.name} />
         <input type="hidden" name="phone" value={venue.phone || ''} />
         <input type="hidden" name="description" value={venue.description || ''} />
+        
+        {lat && <input type="hidden" name="latitude" value={lat} />}
+        {lng && <input type="hidden" name="longitude" value={lng} />}
 
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
@@ -87,6 +94,20 @@ export function VenueLocationForm({ venue }: { venue: any }) {
             <input name="city" type="text" className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" defaultValue={venue.city} required />
           </div>
         </div>
+
+        <div className="space-y-2 pt-2">
+          <label className="text-sm font-medium leading-none">Ubicación exacta en el mapa</label>
+          <p className="text-xs text-muted-foreground pb-2">Hacé clic o arrastrá el pin para marcar la ubicación exacta de tu complejo.</p>
+          <LocationPicker 
+            initialLat={venue.latitude || undefined} 
+            initialLng={venue.longitude || undefined} 
+            onChange={(newLat, newLng) => {
+              setLat(newLat)
+              setLng(newLng)
+            }} 
+          />
+        </div>
+
         <div className="pt-4">
           <Button type="submit" disabled={loading}>
             {loading ? "Guardando..." : "Actualizar Ubicación"}

@@ -16,12 +16,14 @@ export async function updateVenueProfile(formData: FormData) {
   const description = formData.get("description") as string
   const address = formData.get("address") as string
   const city = formData.get("city") as string
+  const manualLat = formData.get("latitude") as string
+  const manualLng = formData.get("longitude") as string
 
   // Geocoding simple con Nominatim
-  let latitude = null
-  let longitude = null
+  let latitude = manualLat ? parseFloat(manualLat) : null
+  let longitude = manualLng ? parseFloat(manualLng) : null
   
-  if (address && city) {
+  if (address && city && latitude === null && longitude === null) {
     try {
       const q = encodeURIComponent(`${address}, ${city}, Argentina`)
       const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}`, {
