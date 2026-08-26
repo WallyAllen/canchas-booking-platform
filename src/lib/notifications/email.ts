@@ -9,7 +9,7 @@ import {
 } from './templates'
 
 const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy_key')
-const FROM_EMAIL = 'ReservaYa <noreply@reservaya.com>'
+const FROM_EMAIL = 'El Potrero <noreply@elpotrero.ar>'
 
 export async function sendBookingConfirmation(booking: any, user: any, venue: any) {
   try {
@@ -63,7 +63,7 @@ export async function sendWelcomeEmail(user: any) {
     await resend.emails.send({
       from: FROM_EMAIL,
       to: user.email,
-      subject: '¡Bienvenido a ReservaYa!',
+      subject: '¡Bienvenido a El Potrero!',
       html: welcomeTemplate(user)
     })
   } catch (error) {

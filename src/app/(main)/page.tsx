@@ -260,7 +260,7 @@ export default async function HomePage() {
             <div className="space-y-4 max-w-2xl">
               <h2 className="text-3xl md:text-4xl font-bold tracking-tight">¿Tenés un predio?</h2>
               <p className="text-lg text-muted-foreground">
-                Sumá tus canchas gratis a ReservaYa. Digitalizá tu agenda, cobrá señas online de forma segura y aumentá la ocupación de tus turnos vacíos con ofertas de último momento.
+                Sumá tus canchas gratis a El Potrero. Digitalizá tu agenda, cobrá señas online de forma segura y aumentá la ocupación de tus turnos vacíos con ofertas de último momento.
               </p>
             </div>
             <div className="shrink-0 w-full md:w-auto">

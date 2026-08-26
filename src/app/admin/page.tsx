@@ -30,7 +30,7 @@ export default async function AdminDashboardPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Dashboard Global</h1>
-        <p className="text-muted-foreground">Métricas en tiempo real de toda la plataforma ReservaYa.</p>
+        <p className="text-muted-foreground">Métricas en tiempo real de toda la plataforma El Potrero.</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

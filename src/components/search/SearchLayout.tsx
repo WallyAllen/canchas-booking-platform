@@ -74,7 +74,7 @@ export function SearchLayout({ venues }: SearchLayoutProps) {
             {/* Mini Footer - Legal Links inside the scrollable list */}
             <div className="mt-auto pt-10 pb-4">
               <div className="border-t border-border/50 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
-                <p>© {currentYear} ReservaYa.</p>
+                <p>© {currentYear} El Potrero.</p>
                 <div className="flex space-x-4">
                   <a href="/terminos" className="hover:text-foreground transition-colors">Términos</a>
                   <a href="/privacidad" className="hover:text-foreground transition-colors">Privacidad</a>

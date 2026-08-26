@@ -10,7 +10,7 @@ export function Footer() {
           <div className="flex flex-col space-y-4">
             <Link href="/" className="flex items-center space-x-2">
               <span className="text-xl">⚽</span>
-              <span className="inline-block font-bold text-primary">ReservaYa</span>
+              <span className="inline-block font-bold text-primary">El Potrero</span>
             </Link>
             <p className="text-sm text-muted-foreground">
               La plataforma líder para reservar canchas de fútbol 5 en La Plata. Encontrá tu horario, reservá y jugá.
@@ -35,7 +35,7 @@ export function Footer() {
           </div>
         </div>
         <div className="mt-10 flex flex-col md:flex-row items-center justify-between border-t pt-6 text-xs text-muted-foreground">
-          <p>© {currentYear} ReservaYa. Todos los derechos reservados.</p>
+          <p>© {currentYear} El Potrero. Todos los derechos reservados.</p>
           <div className="flex space-x-4 mt-4 md:mt-0">
             <Link href="#" className="hover:text-foreground transition-colors">Términos y Condiciones</Link>
             <Link href="#" className="hover:text-foreground transition-colors">Privacidad</Link>

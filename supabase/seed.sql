@@ -2,9 +2,9 @@
 -- Password is 'password123' for all users
 INSERT INTO auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, raw_user_meta_data, created_at, updated_at)
 VALUES 
-    ('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'player@reservaya.com', crypt('password123', gen_salt('bf')), NOW(), '{"full_name": "Juan Jugador"}', NOW(), NOW()),
+    ('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'player@elpotrero.ar', crypt('password123', gen_salt('bf')), NOW(), '{"full_name": "Juan Jugador"}', NOW(), NOW()),
     ('00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'admin@laredonda.com', crypt('password123', gen_salt('bf')), NOW(), '{"full_name": "Carlos Admin"}', NOW(), NOW()),
-    ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'platform@reservaya.com', crypt('password123', gen_salt('bf')), NOW(), '{"full_name": "Admin Plataforma"}', NOW(), NOW());
+    ('00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'platform@elpotrero.ar', crypt('password123', gen_salt('bf')), NOW(), '{"full_name": "Admin Plataforma"}', NOW(), NOW());
 
 -- Update profiles with roles (profiles were created by trigger)
 UPDATE public.profiles SET role = 'player' WHERE id = '00000000-0000-0000-0000-000000000001';

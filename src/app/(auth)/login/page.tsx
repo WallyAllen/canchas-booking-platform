@@ -85,7 +85,7 @@ function LoginForm() {
             <span className="text-4xl">⚽</span>
           </div>
           <div>
-            <CardTitle className="text-3xl font-bold tracking-tight">ReservaYa</CardTitle>
+            <CardTitle className="text-3xl font-bold tracking-tight">El Potrero</CardTitle>
             <CardDescription className="mt-2 text-base">
               Iniciá sesión para reservar tu cancha
             </CardDescription>

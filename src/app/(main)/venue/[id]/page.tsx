@@ -18,11 +18,11 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
     .eq("id", params.id)
     .single()
 
-  if (!venue) return { title: "Cancha no encontrada | ReservaYa" }
+  if (!venue) return { title: "Cancha no encontrada | El Potrero" }
 
   return {
-    title: `${venue.name} | ReservaYa`,
-    description: venue.description || `Reservá tu cancha en ${venue.name} de forma fácil y rápida con ReservaYa.`,
+    title: `${venue.name} | El Potrero`,
+    description: venue.description || `Reservá tu cancha en ${venue.name} de forma fácil y rápida con El Potrero.`,
   }
 }
 

@@ -20,7 +20,7 @@ export const bookingConfirmationTemplate = (booking: any, user: any, venue: any)
 <body>
   <div class="container">
     <div class="header">
-      <div class="logo">ReservaYa</div>
+      <div class="logo">El Potrero</div>
       <h1 class="title">¡Tu reserva está confirmada!</h1>
       <p>Hola ${user.full_name || 'jugador'}, tu partido en ${venue.name} ha sido confirmado con éxito.</p>
     </div>
@@ -34,12 +34,12 @@ export const bookingConfirmationTemplate = (booking: any, user: any, venue: any)
     </div>
     
     <div style="text-align: center;">
-      <a href="https://reservaya.vercel.app/bookings" class="button">Ver mis reservas</a>
+      <a href="https://elpotrero.vercel.app/bookings" class="button">Ver mis reservas</a>
     </div>
     
     <div class="footer">
       <p>Tené en cuenta que podés cancelar hasta 6 horas antes para recuperar tu seña en forma de créditos.</p>
-      <p>© ${new Date().getFullYear()} ReservaYa. Todos los derechos reservados.</p>
+      <p>© ${new Date().getFullYear()} El Potrero. Todos los derechos reservados.</p>
     </div>
   </div>
 </body>
@@ -63,7 +63,7 @@ export const reminderTemplate = (booking: any, user: any, venue: any) => `
 <body>
   <div class="container">
     <div class="header">
-      <div class="logo">ReservaYa</div>
+      <div class="logo">El Potrero</div>
       <h1 class="title">¡Prepará los botines!</h1>
       <p>Hola ${user.full_name || 'jugador'}, te recordamos que tenés un partido en menos de 2 horas.</p>
     </div>
@@ -78,7 +78,7 @@ export const reminderTemplate = (booking: any, user: any, venue: any) => `
     <p style="text-align: center;">Recordá llegar 10 minutos antes y abonar el resto de la cancha en recepción.</p>
     
     <div class="footer">
-      <p>© ${new Date().getFullYear()} ReservaYa.</p>
+      <p>© ${new Date().getFullYear()} El Potrero.</p>
     </div>
   </div>
 </body>
@@ -104,7 +104,7 @@ export const cancellationTemplate = (booking: any, user: any, venue: any, credit
 <body>
   <div class="container">
     <div class="header">
-      <div class="logo">ReservaYa</div>
+      <div class="logo">El Potrero</div>
       <h1 class="title">Reserva Cancelada</h1>
       <p>Hola ${user.full_name || 'jugador'}, confirmamos la cancelación de tu turno en ${venue.name} para el ${new Date(`${booking.booking_date}T12:00:00`).toLocaleDateString('es-AR')} a las ${booking.start_time.substring(0, 5)} hs.</p>
     </div>
@@ -121,7 +121,7 @@ export const cancellationTemplate = (booking: any, user: any, venue: any, credit
     }
     
     <div class="footer">
-      <p>© ${new Date().getFullYear()} ReservaYa.</p>
+      <p>© ${new Date().getFullYear()} El Potrero.</p>
     </div>
   </div>
 </body>
@@ -145,19 +145,19 @@ export const welcomeTemplate = (user: any) => `
 <body>
   <div class="container">
     <div class="header">
-      <div class="logo">ReservaYa</div>
-      <h1 class="title">¡Bienvenido a ReservaYa! ⚽</h1>
+      <div class="logo">El Potrero</div>
+      <h1 class="title">¡Bienvenido a El Potrero! ⚽</h1>
     </div>
     
     <p>Hola ${user.full_name || 'jugador'},</p>
     <p>Estamos muy felices de tenerte con nosotros. A partir de ahora podés buscar las mejores canchas de tu ciudad, comparar precios, ver disponibilidad en tiempo real y reservar al instante abonando solo la seña.</p>
     
     <div style="text-align: center;">
-      <a href="https://reservaya.vercel.app/search" class="button">Buscar mi primera cancha</a>
+      <a href="https://elpotrero.vercel.app/search" class="button">Buscar mi primera cancha</a>
     </div>
     
     <div class="footer">
-      <p>© ${new Date().getFullYear()} ReservaYa.</p>
+      <p>© ${new Date().getFullYear()} El Potrero.</p>
     </div>
   </div>
 </body>

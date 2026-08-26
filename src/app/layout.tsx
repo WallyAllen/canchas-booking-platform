@@ -7,7 +7,7 @@ import { Toaster } from "@/components/ui/toast";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "ReservaYa",
+  title: "El Potrero",
   description: "Plataforma web para centralizar la reserva de canchas de fútbol 5 en La Plata.",
 };
 

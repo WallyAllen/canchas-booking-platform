@@ -25,7 +25,7 @@ export async function updateVenueProfile(formData: FormData) {
     try {
       const q = encodeURIComponent(`${address}, ${city}, Argentina`)
       const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}`, {
-        headers: { 'User-Agent': 'ReservaYa MVP' }
+        headers: { 'User-Agent': 'El Potrero MVP' }
       })
       const data = await res.json()
       if (data && data.length > 0) {
