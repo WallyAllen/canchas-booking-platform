@@ -14,6 +14,8 @@ interface BookingWizardProps {
     courtId: string
     courtName: string
     venueName: string
+    venueAddress?: string
+    venueCity?: string
     date: string
     time: string
     price: number
@@ -109,8 +111,8 @@ export function BookingWizard({ booking }: BookingWizardProps) {
               <div className="flex items-start gap-3">
                 <MapPin className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-semibold text-lg">{booking.courtName}</p>
-                  <p className="text-muted-foreground">{booking.venueName}</p>
+                  <p className="font-semibold text-lg">{booking.courtName} - {booking.venueName}</p>
+                  <p className="text-muted-foreground">{booking.venueAddress}, {booking.venueCity}</p>
                 </div>
               </div>
               <div className="h-px bg-border/50 w-full" />
@@ -123,6 +125,14 @@ export function BookingWizard({ booking }: BookingWizardProps) {
                 <div className="flex items-center gap-3">
                   <Clock className="h-5 w-5 text-primary shrink-0" />
                   <p className="font-medium">{booking.time} hs <span className="text-muted-foreground font-normal">(1 hora)</span></p>
+                </div>
+              </div>
+              <div className="h-px bg-border/50 w-full" />
+              <div className="flex items-center gap-3">
+                <Banknote className="h-5 w-5 text-primary shrink-0" />
+                <div className="w-full flex items-center justify-between">
+                  <p className="font-medium">Monto Total</p>
+                  <p className="font-bold text-lg text-primary">${booking.price.toLocaleString('es-AR')}</p>
                 </div>
               </div>
             </div>

@@ -134,6 +134,8 @@ export default async function BookingPage({
     courtId: court.id,
     courtName: court.name,
     venueName: court.venues.name,
+    venueAddress: court.venues.address,
+    venueCity: court.venues.city,
     date,
     time: timeStr,
     price,
