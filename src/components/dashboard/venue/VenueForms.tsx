@@ -96,7 +96,7 @@ export function VenueLocationForm({ venue }: { venue: any }) {
         </div>
 
         <div className="space-y-2 pt-2">
-          <label className="text-sm font-medium leading-none">Ubicación exacta en el mapa</label>
+          <div className="text-sm font-medium leading-none">Ubicación exacta en el mapa</div>
           <p className="text-xs text-muted-foreground pb-2">Hacé clic o arrastrá el pin para marcar la ubicación exacta de tu complejo.</p>
           <LocationPicker 
             initialLat={venue.latitude || undefined} 

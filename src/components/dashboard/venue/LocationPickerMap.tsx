@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useState, useRef } from "react"
 import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet"
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
@@ -21,7 +21,15 @@ interface LocationPickerProps {
   onChange: (lat: number, lng: number) => void
 }
 
-function LocationMarker({ position, setPosition, onChange }: { position: L.LatLng | null, setPosition: any, onChange: any }) {
+function LocationMarker({ 
+  position, 
+  setPosition, 
+  onChange 
+}: { 
+  position: L.LatLng | null;
+  setPosition: (pos: L.LatLng) => void;
+  onChange: (lat: number, lng: number) => void;
+}) {
   useMapEvents({
     click(e) {
       setPosition(e.latlng)

@@ -68,7 +68,7 @@ export default function NewVenuePage() {
             </div>
 
             <div className="space-y-2 pt-2">
-              <label className="text-sm font-medium leading-none">Ubicación en el mapa</label>
+              <div className="text-sm font-medium leading-none">Ubicación en el mapa</div>
               <p className="text-xs text-muted-foreground pb-2">Hacé clic o arrastrá el pin para marcar dónde queda tu predio.</p>
               <LocationPicker 
                 onChange={(newLat, newLng) => {
