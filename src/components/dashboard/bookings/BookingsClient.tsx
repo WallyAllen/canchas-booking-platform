@@ -4,17 +4,32 @@ import { useState, useMemo } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { BookingActions } from "@/components/dashboard/bookings/BookingActions"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { format, parseISO } from "date-fns"
+import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { CalendarIcon, ArrowUpDown, LayoutList, Grid } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-type Booking = any
-type Court = any
+export interface Booking {
+  id: string
+  court_id: string
+  booking_date: string
+  start_time: string
+  end_time: string
+  total_price: number
+  booking_status: string
+  payment_status: string
+  courts?: { name: string }
+  profiles?: { full_name: string; email: string; phone: string }
+}
+
+export interface Court {
+  id: string
+  name: string
+}
 
 interface BookingsClientProps {
   initialBookings: Booking[]
@@ -42,8 +57,8 @@ export function BookingsClient({ initialBookings, courts }: BookingsClientProps)
 
   const sortedBookings = useMemo(() => {
     return [...initialBookings].sort((a, b) => {
-      let aValue: any = a[sortConfig.key]
-      let bValue: any = b[sortConfig.key]
+      let aValue: unknown = a[sortConfig.key as keyof Booking]
+      let bValue: unknown = b[sortConfig.key as keyof Booking]
 
       if (sortConfig.key === 'courts.name') {
         aValue = a.courts?.name
@@ -56,8 +71,8 @@ export function BookingsClient({ initialBookings, courts }: BookingsClientProps)
         bValue = new Date(`${b.booking_date}T${b.start_time}`).getTime()
       }
 
-      if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1
-      if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1
+      if ((aValue as number | string) < (bValue as number | string)) return sortConfig.direction === 'asc' ? -1 : 1
+      if ((aValue as number | string) > (bValue as number | string)) return sortConfig.direction === 'asc' ? 1 : -1
       return 0
     })
   }, [initialBookings, sortConfig])
@@ -102,24 +117,15 @@ export function BookingsClient({ initialBookings, courts }: BookingsClientProps)
 
         {viewMode === 'grid' && (
           <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant={"outline"}
-                className={cn(
-                  "w-[240px] justify-start text-left font-normal",
-                  !selectedDate && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {selectedDate ? format(selectedDate, "PPP", { locale: es }) : <span>Seleccionar fecha</span>}
-              </Button>
+            <PopoverTrigger className={buttonVariants({ variant: "outline", className: cn("w-[240px] justify-start text-left font-normal", !selectedDate && "text-muted-foreground") })}>
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {selectedDate ? format(selectedDate, "PPP", { locale: es }) : <span>Seleccionar fecha</span>}
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="end">
               <Calendar
                 mode="single"
                 selected={selectedDate}
                 onSelect={(date) => date && setSelectedDate(date)}
-                initialFocus
               />
             </PopoverContent>
           </Popover>
@@ -152,7 +158,7 @@ export function BookingsClient({ initialBookings, courts }: BookingsClientProps)
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/50">
-                  {sortedBookings.length > 0 ? sortedBookings.map((booking: any) => (
+                  {sortedBookings.length > 0 ? sortedBookings.map((booking: Booking) => (
                     <tr key={booking.id} className="hover:bg-muted/30 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="font-medium">{new Date(`${booking.booking_date}T12:00:00`).toLocaleDateString('es-AR')}</div>

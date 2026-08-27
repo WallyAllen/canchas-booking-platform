@@ -9,16 +9,16 @@ export default async function VenueBookingsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect("/login")
 
-  const { data: venues } = await (supabase.from("venues") as any)
+  const { data: venues } = await supabase.from("venues")
     .select("*, courts(id, name)")
     .eq("owner_id", user.id)
 
   const venue = venues?.[0]
   if (!venue) redirect("/dashboard")
 
-  const courtIds = venue.courts.map((c: any) => c.id)
+  const courtIds = venue.courts.map((c: { id: string }) => c.id)
 
-  const { data: bookingsData } = await (supabase.from("bookings") as any)
+  const { data: bookingsData } = await supabase.from("bookings")
     .select("*, courts(name), profiles(full_name, email, phone)")
     .in("court_id", courtIds)
 

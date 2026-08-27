@@ -9,7 +9,8 @@ import {
   CalendarDays, 
   Calendar, 
   Star, 
-  Settings 
+  Settings,
+  MessageCircle
 } from "lucide-react"
 
 const sidebarItems = [
@@ -17,6 +18,7 @@ const sidebarItems = [
   { name: "Mis Canchas", href: "/dashboard/courts", icon: MapPin },
   { name: "Reservas", href: "/dashboard/bookings", icon: CalendarDays },
   { name: "Calendario", href: "/dashboard/schedule", icon: Calendar },
+  { name: "Mensajes", href: "/dashboard/inbox", icon: MessageCircle },
   { name: "Reseñas", href: "/dashboard/reviews", icon: Star },
   { name: "Perfil del Predio", href: "/dashboard/venue", icon: Settings },
 ]

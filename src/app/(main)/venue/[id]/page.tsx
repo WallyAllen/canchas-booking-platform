@@ -7,6 +7,7 @@ import { AvailabilityGrid } from "@/components/venue/AvailabilityGrid"
 import { PricingTable, PricingRule } from "@/components/venue/PricingTable"
 import { ReviewSection, ReviewItem } from "@/components/venue/ReviewSection"
 import { VenueMap } from "@/components/map/VenueMap"
+import { PlayerChatModal } from "@/components/chat/PlayerChatModal"
 import { MapPin, Phone, CheckCircle2 } from "lucide-react"
 
 export const dynamic = 'force-dynamic'
@@ -155,6 +156,13 @@ export default async function VenuePage({ params }: { params: { id: string } }) 
 
         {/* Sidebar (Right, 1/3) */}
         <div className="space-y-8">
+          {/* Chat Button */}
+          <div className="bg-card border border-border/50 rounded-xl p-4 shadow-xs">
+            <h3 className="font-bold text-lg mb-2">¿Tenés dudas?</h3>
+            <p className="text-sm text-muted-foreground mb-4">Hablá directamente con el predio y resolvé tus consultas al instante.</p>
+            <PlayerChatModal venueId={venue.id} venueName={venue.name} />
+          </div>
+
           {/* Mini Map */}
           {venue.latitude && venue.longitude && (
             <div className="bg-card border border-border/50 rounded-xl overflow-hidden shadow-xs">
