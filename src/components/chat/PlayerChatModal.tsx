@@ -104,10 +104,11 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
     if (!inputValue || !inputValue.trim() || !conversationId) return
     
     const text = inputValue.trim()
-    setInputValue("") // optimistically clear
     try {
       await sendMessage(conversationId, text)
-    } catch (e) {
+      setInputValue("") // clear only on success
+    } catch (e: any) {
+      alert("Error al enviar: " + (e.message || "Desconocido"))
       console.error(e)
     }
   }

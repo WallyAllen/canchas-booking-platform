@@ -72,10 +72,11 @@ export function AdminChatThread({ conversation, onBack }: AdminChatThreadProps) 
     if (!inputValue || !inputValue.trim() || !conversation?.id) return
     
     const text = inputValue.trim()
-    setInputValue("")
     try {
       await sendMessage(conversation.id, text)
-    } catch (err) {
+      setInputValue("")
+    } catch (err: any) {
+      alert("Error al enviar: " + (err.message || "Desconocido"))
       console.error(err)
     }
   }

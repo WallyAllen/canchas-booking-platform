@@ -20,14 +20,15 @@ export async function sendMessage(conversationId: string, content: string) {
     .eq("id", conversationId)
     .single()
     
-  const conversation = conversationData as unknown as { user_id: string; unread_venue_count: number; venues: { owner_id: string; name: string } }
+  // @ts-ignore
+  const conversation = conversationData as any
     
   if (!conversation) {
     throw new Error("Conversación no encontrada")
   }
   
   // Insert the message
-  const { error: insertError } = await (supabase.from("messages") as unknown as { insert: (data: unknown) => { error: unknown } })
+  const { error: insertError } = await (supabase.from("messages") as any)
     .insert({
       conversation_id: conversationId,
       sender_id: userId,
@@ -35,12 +36,13 @@ export async function sendMessage(conversationId: string, content: string) {
     })
     
   if (insertError) {
-    throw new Error("Error al enviar mensaje")
+    throw new Error("Error al enviar mensaje: " + insertError.message)
   }
   
   if (userId === conversation.user_id && conversation.unread_venue_count === 0) {
     // Send email to venue admin
-    const ownerId = conversation.venues.owner_id
+    const ownerId = conversation.venues?.owner_id
+    if (!ownerId) return { success: true }
     
     // Get owner email
     const { data: ownerData } = await supabase
@@ -49,9 +51,9 @@ export async function sendMessage(conversationId: string, content: string) {
       .eq("id", ownerId)
       .single()
       
-    const owner = ownerData as unknown as { email: string }
+    const owner = ownerData as any
       
-    if (owner && owner.email) {
+    if (owner && owner.email && process.env.RESEND_API_KEY) {
       try {
         await resend.emails.send({
           from: 'ReservaYa <mensajes@reservaya.com>',
@@ -80,21 +82,18 @@ export async function startConversation(venueId: string) {
   const userId = userData.user.id
   
   // Check if conversation already exists
-  const { data: existingData } = await supabase
-    .from("conversations")
+  const { data: existingData } = await (supabase.from("conversations") as any)
     .select("id")
     .eq("venue_id", venueId)
     .eq("user_id", userId)
     .single()
     
-  const existing = existingData as unknown as { id: string }
-    
-  if (existing) {
-    return { conversationId: existing.id }
+  if (existingData) {
+    return { conversationId: existingData.id }
   }
   
   // Create new conversation
-  const { data: newConvData, error: insertError } = await (supabase.from("conversations") as unknown as { insert: (data: unknown) => { select: () => { single: () => Promise<{ data: unknown, error: unknown }> } } })
+  const { data: newConvData, error: insertError } = await (supabase.from("conversations") as any)
     .insert({
       venue_id: venueId,
       user_id: userId
@@ -102,10 +101,10 @@ export async function startConversation(venueId: string) {
     .select()
     .single()
     
-  const newConv = newConvData as unknown as { id: string }
+  const newConv = newConvData as any
     
   if (insertError || !newConv) {
-    throw new Error("Error al crear conversación")
+    throw new Error("Error al crear conversación: " + (insertError?.message || ''))
   }
   
   return { conversationId: newConv.id }
@@ -115,9 +114,9 @@ export async function markConversationAsRead(conversationId: string, asRole: 'us
   const supabase = await createClient()
   
   if (asRole === 'user') {
-    await (supabase.from('conversations') as unknown as { update: (data: unknown) => { eq: (col: string, val: string) => Promise<void> } }).update({ unread_user_count: 0 }).eq('id', conversationId)
+    await (supabase.from('conversations') as any).update({ unread_user_count: 0 }).eq('id', conversationId)
   } else {
-    await (supabase.from('conversations') as unknown as { update: (data: unknown) => { eq: (col: string, val: string) => Promise<void> } }).update({ unread_venue_count: 0 }).eq('id', conversationId)
+    await (supabase.from('conversations') as any).update({ unread_venue_count: 0 }).eq('id', conversationId)
   }
   
   return { success: true }

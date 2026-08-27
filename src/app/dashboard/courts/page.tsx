@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { MapPin } from "lucide-react"
 import { CourtFormModal } from "@/components/dashboard/courts/CourtFormModal"
 import { PricingModal } from "@/components/dashboard/courts/PricingModal"
+import { OffersModal } from "@/components/dashboard/courts/OffersModal"
 
 export const dynamic = 'force-dynamic'
 
@@ -23,7 +24,7 @@ export default async function CourtsPage() {
   if (!venue) redirect("/dashboard")
 
   const { data: courts } = await (supabase.from("courts") as any)
-    .select("*")
+    .select("*, pricing_rules(price)")
     .eq("venue_id", venue.id)
     .order("created_at", { ascending: true })
 
@@ -38,7 +39,10 @@ export default async function CourtsPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {courts && courts.length > 0 ? courts.map((court: any) => (
+        {courts && courts.length > 0 ? courts.map((court: any) => {
+          const basePrice = court.pricing_rules?.[0]?.price || 15000
+          
+          return (
           <Card key={court.id}>
             <CardHeader className="pb-3">
               <div className="flex justify-between items-start">
@@ -64,16 +68,19 @@ export default async function CourtsPage() {
                   <div className="font-medium">{court.slot_duration_minutes} min</div>
                 </div>
 
-                <div className="pt-4 border-t grid grid-cols-2 gap-2">
-                  <Button variant="outline" size="sm" className="w-full">
-                    Editar
-                  </Button>
-                  <PricingModal courtId={court.id} />
+                <div className="pt-4 border-t flex flex-col gap-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button variant="outline" size="sm" className="w-full">
+                      Editar
+                    </Button>
+                    <PricingModal courtId={court.id} defaultPrice={basePrice} />
+                  </div>
+                  <OffersModal courtId={court.id} basePrice={basePrice} />
                 </div>
               </div>
             </CardContent>
           </Card>
-        )) : (
+        )}) : (
           <div className="col-span-full py-12 text-center bg-muted/20 border rounded-xl border-dashed">
             <MapPin className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
             <h3 className="text-lg font-medium mb-1">No tienes canchas creadas</h3>

@@ -93,3 +93,62 @@ export async function updatePricing(courtId: string, formData: FormData) {
 
   revalidatePath("/dashboard/courts")
 }
+
+export async function saveOffers(courtId: string, formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error("No autenticado")
+
+  const offersJson = formData.get("offers") as string
+  const basePriceStr = formData.get("basePrice") as string
+  
+  if (!offersJson || !basePriceStr) throw new Error("Datos inválidos")
+    
+  const offers = JSON.parse(offersJson)
+  const basePrice = parseFloat(basePriceStr)
+
+  // Clear existing promo rules
+  // Wait, if we just delete everything and recreate, it's easier to manage for MVP.
+  // We'll delete ALL rules for the court and recreate the base rules + promo rules.
+  await supabase.from("pricing_rules").delete().eq("court_id", courtId)
+  
+  const rules = []
+  
+  // Create base rules for each day (0-6)
+  // We'll just create a full day base rule. If a promo overlaps, our app logic (or a more complex query)
+  // would need to handle it. For MVP, we insert both base rules and promo rules.
+  // When fetching availability, we'd pick the promo rule if it applies.
+  for (let i = 0; i <= 6; i++) {
+    rules.push({
+      court_id: courtId,
+      day_of_week: i,
+      start_time: "00:00",
+      end_time: "23:59",
+      price: basePrice,
+      is_promo_active: false
+    })
+  }
+  
+  // Add promo rules
+  for (const offer of offers) {
+    const promoPrice = basePrice * (1 - (offer.discount_percentage / 100))
+    rules.push({
+      court_id: courtId,
+      day_of_week: parseInt(offer.day_of_week),
+      start_time: offer.start_time,
+      end_time: offer.end_time,
+      price: basePrice,
+      promo_price: promoPrice,
+      is_promo_active: true
+    })
+  }
+
+  const { error } = await (supabase.from("pricing_rules") as any).insert(rules)
+
+  if (error) {
+    console.error(error)
+    throw new Error(error.message)
+  }
+
+  revalidatePath("/dashboard/courts")
+}
