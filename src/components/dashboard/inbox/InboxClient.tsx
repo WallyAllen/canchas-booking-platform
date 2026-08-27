@@ -69,11 +69,11 @@ export function InboxClient({ initialConversations, venueId }: InboxClientProps)
           onSelect={setActiveId} 
         />
       </div>
-      
       <div className={`flex-1 flex-col ${!activeId ? 'hidden md:flex' : 'flex'}`}>
         {activeId ? (
           <AdminChatThread 
             conversation={conversations.find(c => c.id === activeId)} 
+            venueId={venueId}
             onBack={() => setActiveId(null)}
           />
         ) : (

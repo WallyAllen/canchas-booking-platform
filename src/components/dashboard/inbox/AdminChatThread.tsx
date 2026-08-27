@@ -21,10 +21,11 @@ interface Message {
 
 interface AdminChatThreadProps {
   conversation: (Record<string, unknown> & { id: string; user_id?: string; unread_user_count?: number; created_at?: string; profiles?: { avatar_url?: string; full_name?: string } }) | undefined
+  venueId: string
   onBack: () => void
 }
 
-export function AdminChatThread({ conversation, onBack }: AdminChatThreadProps) {
+export function AdminChatThread({ conversation, venueId, onBack }: AdminChatThreadProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [inputValue, setInputValue] = useState("")
   const [isLoading, setIsLoading] = useState(true)
@@ -38,6 +39,35 @@ export function AdminChatThread({ conversation, onBack }: AdminChatThreadProps) 
 
   const [isOtherTyping, setIsOtherTyping] = useState(false)
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  
+  const [latestBooking, setLatestBooking] = useState<{
+    id: string,
+    booking_date: string,
+    start_time: string,
+    courts: { name: string } | { name: string }[] | null
+  } | null>(null)
+
+  useEffect(() => {
+    if (!conversation?.user_id) return
+    
+    const fetchBooking = async () => {
+      const { data } = await supabase
+        .from('bookings')
+        .select('id, booking_date, start_time, courts!inner(name, venue_id)')
+        .eq('user_id', conversation.user_id!)
+        .eq('courts.venue_id', venueId)
+        .eq('booking_status', 'confirmed')
+        .order('booking_date', { ascending: false })
+        .limit(1)
+        .single()
+        
+      if (data) {
+        setLatestBooking(data as any)
+      }
+    }
+    
+    fetchBooking()
+  }, [conversation?.user_id, venueId, supabase])
 
   useEffect(() => {
     if (!conversation?.id) return
@@ -175,23 +205,43 @@ export function AdminChatThread({ conversation, onBack }: AdminChatThreadProps) 
   return (
     <div className="flex flex-col h-full bg-background">
       {/* Header */}
-      <div className="p-3 border-b border-border/50 flex items-center gap-3 shrink-0 bg-muted/10">
-        <Button variant="ghost" size="icon" className="md:hidden" onClick={onBack}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <Avatar className="h-10 w-10">
-          <AvatarImage src={conversation.profiles?.avatar_url || ''} />
-          <AvatarFallback className="bg-muted">
-            <User className="h-5 w-5 text-muted-foreground" />
-          </AvatarFallback>
-        </Avatar>
-        <div>
-          <h3 className="font-semibold">{conversation.profiles?.full_name || 'Jugador Anónimo'}</h3>
-          <p className="text-xs text-muted-foreground">
-            Iniciada el {format(new Date(conversation.created_at || new Date().toISOString()), "d 'de' MMMM", { locale: es })}
-          </p>
+      <div className="p-3 border-b border-border/50 flex items-center justify-between shrink-0 bg-muted/10">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" className="md:hidden" onClick={onBack}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <Avatar className="h-10 w-10">
+            <AvatarImage src={conversation.profiles?.avatar_url || ''} />
+            <AvatarFallback className="bg-muted">
+              <User className="h-5 w-5 text-muted-foreground" />
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <h3 className="font-semibold">{conversation.profiles?.full_name || 'Jugador Anónimo'}</h3>
+            <p className="text-xs text-muted-foreground">
+              Iniciada el {format(new Date(conversation.created_at || new Date().toISOString()), "d 'de' MMMM", { locale: es })}
+            </p>
+          </div>
         </div>
+
+        {latestBooking && (
+          <div className="hidden sm:block text-right">
+            <span className="text-xs font-semibold text-primary block">Próxima Reserva</span>
+            <span className="text-xs text-muted-foreground block">
+              {Array.isArray(latestBooking.courts) ? latestBooking.courts[0]?.name : latestBooking.courts?.name} • {format(new Date(latestBooking.booking_date + "T00:00:00"), "d 'de' MMM", { locale: es })} a las {latestBooking.start_time.slice(0, 5)}
+            </span>
+          </div>
+        )}
       </div>
+      
+      {latestBooking && (
+        <div className="sm:hidden px-3 py-2 bg-primary/5 border-b border-border/50 flex justify-between items-center text-xs">
+          <span className="font-semibold text-primary">Próxima Reserva</span>
+          <span className="text-muted-foreground">
+            {Array.isArray(latestBooking.courts) ? latestBooking.courts[0]?.name : latestBooking.courts?.name} • {format(new Date(latestBooking.booking_date + "T00:00:00"), "d 'de' MMM", { locale: es })} a las {latestBooking.start_time.slice(0, 5)}
+          </span>
+        </div>
+      )}
       
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
