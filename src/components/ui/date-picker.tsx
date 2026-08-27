@@ -22,7 +22,7 @@ interface DatePickerProps {
   formatStr?: string
 }
 
-export function DatePicker({ value, onChange, placeholder = "Seleccionar fecha", className, formatStr = "PPP" }: DatePickerProps) {
+export function DatePicker({ value, onChange, placeholder = "Seleccionar fecha", className, formatStr = "d MMM" }: DatePickerProps) {
   const [isOpen, setIsOpen] = React.useState(false)
 
   const dateValue = React.useMemo(() => {

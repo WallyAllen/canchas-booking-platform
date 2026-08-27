@@ -7,7 +7,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { MessageCircle, Send } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { startConversation, sendMessage, markConversationAsRead } from "@/app/actions/chat"
-import { useFormStatus } from "react-dom"
 import { format } from "date-fns"
 
 interface PlayerChatModalProps {
@@ -20,15 +19,6 @@ interface Message {
   sender_id: string
   content: string
   created_at: string
-}
-
-function SubmitButton() {
-  const { pending } = useFormStatus()
-  return (
-    <Button type="submit" size="icon" disabled={pending} className="h-10 w-10 shrink-0">
-      <Send className="h-4 w-4" />
-    </Button>
-  )
 }
 
 export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
@@ -109,13 +99,14 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
     }
   }, [messages])
 
-  const handleSend = async (formData: FormData) => {
-    const text = formData.get("message") as string
-    if (!text || !text.trim() || !conversationId) return
+  const handleSend = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!inputValue || !inputValue.trim() || !conversationId) return
     
+    const text = inputValue.trim()
     setInputValue("") // optimistically clear
     try {
-      await sendMessage(conversationId, text.trim())
+      await sendMessage(conversationId, text)
     } catch (e) {
       console.error(e)
     }
@@ -168,7 +159,7 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
               )}
             </div>
             
-            <form action={handleSend} className="p-3 border-t border-border/50 bg-muted/10 shrink-0 flex gap-2 items-center">
+            <form onSubmit={handleSend} className="p-3 border-t border-border/50 bg-muted/10 shrink-0 flex gap-2 items-center">
               <Input
                 name="message"
                 value={inputValue}
@@ -177,7 +168,9 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
                 className="flex-1 bg-background"
                 autoComplete="off"
               />
-              <SubmitButton />
+              <Button type="submit" size="icon" className="h-10 w-10 shrink-0">
+                <Send className="h-4 w-4" />
+              </Button>
             </form>
           </>
         )}

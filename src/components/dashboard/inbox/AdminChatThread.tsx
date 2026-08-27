@@ -8,17 +8,7 @@ import { Input } from "@/components/ui/input"
 import { ArrowLeft, Send, User } from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
-import { useFormStatus } from "react-dom"
 import Image from "next/image"
-
-function SubmitButton() {
-  const { pending } = useFormStatus()
-  return (
-    <Button type="submit" size="icon" disabled={pending} className="h-10 w-10 shrink-0">
-      <Send className="h-4 w-4" />
-    </Button>
-  )
-}
 
 interface AdminChatThreadProps {
   conversation: (Record<string, unknown> & { id: string; user_id?: string; created_at?: string; profiles?: { avatar_url?: string; full_name?: string } }) | undefined
@@ -77,15 +67,16 @@ export function AdminChatThread({ conversation, onBack }: AdminChatThreadProps) 
     }
   }, [messages])
 
-  const handleSend = async (formData: FormData) => {
-    const text = formData.get("message") as string
-    if (!text || !text.trim() || !conversation?.id) return
+  const handleSend = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!inputValue || !inputValue.trim() || !conversation?.id) return
     
+    const text = inputValue.trim()
     setInputValue("")
     try {
-      await sendMessage(conversation.id, text.trim())
-    } catch (e) {
-      console.error(e)
+      await sendMessage(conversation.id, text)
+    } catch (err) {
+      console.error(err)
     }
   }
 
@@ -141,7 +132,7 @@ export function AdminChatThread({ conversation, onBack }: AdminChatThreadProps) 
       </div>
       
       {/* Input */}
-      <form action={handleSend} className="p-3 border-t border-border/50 shrink-0 flex gap-2 items-center bg-muted/10">
+      <form onSubmit={handleSend} className="p-3 border-t border-border/50 shrink-0 flex gap-2 items-center bg-muted/10">
         <Input
           name="message"
           value={inputValue}
@@ -150,7 +141,9 @@ export function AdminChatThread({ conversation, onBack }: AdminChatThreadProps) 
           className="flex-1 bg-background"
           autoComplete="off"
         />
-        <SubmitButton />
+        <Button type="submit" size="icon" className="h-10 w-10 shrink-0">
+          <Send className="h-4 w-4" />
+        </Button>
       </form>
     </div>
   )
