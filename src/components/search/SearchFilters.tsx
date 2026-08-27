@@ -110,8 +110,33 @@ export function SearchFilters() {
 
         <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto pb-1 sm:pb-0">
           
+          {/* Match Type Inline */}
+          <div className="shrink-0 flex items-center w-[130px]">
+            <Select 
+              value={type} 
+              onValueChange={(val: string) => {
+                const newVal = val === "all" ? "" : val
+                setType(newVal)
+                updateUrl({ type: newVal })
+              }}
+            >
+              <SelectTrigger className="h-9 w-full bg-background text-xs">
+                <SelectValue placeholder="Tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Cualquiera</SelectItem>
+                <SelectItem value="F5">Fútbol 5</SelectItem>
+                <SelectItem value="F6">Fútbol 6</SelectItem>
+                <SelectItem value="F7">Fútbol 7</SelectItem>
+                <SelectItem value="F8">Fútbol 8</SelectItem>
+                <SelectItem value="F9">Fútbol 9</SelectItem>
+                <SelectItem value="F11">Fútbol 11</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Custom Date Select */}
-          <div className="shrink-0 flex items-center w-[150px]">
+          <div className="shrink-0 flex items-center w-[140px]">
             <DatePicker
               value={date}
               onChange={(newVal) => {
@@ -119,11 +144,13 @@ export function SearchFilters() {
                 updateUrl({ date: newVal })
               }}
               placeholder="Cualquier día"
+              formatStr="d MMM"
               className="h-9 text-xs w-full bg-background border-input"
             />
           </div>
 
           {/* Custom Time Select */}
+
           <div className="shrink-0 flex items-center w-[150px]">
             <TimePicker
               value={time}
@@ -174,21 +201,6 @@ export function SearchFilters() {
               </SheetHeader>
               
               <div className="space-y-6 flex-1">
-                <div className="space-y-3">
-                  <Label>Tipo de Cancha</Label>
-                  <select 
-                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                    value={type}
-                    onChange={(e) => setType(e.target.value)}
-                  >
-                    <option value="">Cualquiera</option>
-                    <option value="F5">Fútbol 5</option>
-                    <option value="F7">Fútbol 7</option>
-                    <option value="F8">Fútbol 8</option>
-                    <option value="F11">Fútbol 11</option>
-                  </select>
-                </div>
-
                 <div className="space-y-3">
                   <Label>Superficie</Label>
                   <select 

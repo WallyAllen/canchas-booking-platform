@@ -290,6 +290,64 @@ export interface Database {
           created_at?: string
         }
       }
+      conversations: {
+        Row: {
+          id: string
+          venue_id: string
+          user_id: string
+          status: 'open' | 'closed' | 'archived'
+          unread_user_count: number
+          unread_venue_count: number
+          last_message_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          venue_id: string
+          user_id: string
+          status?: 'open' | 'closed' | 'archived'
+          unread_user_count?: number
+          unread_venue_count?: number
+          last_message_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          venue_id?: string
+          user_id?: string
+          status?: 'open' | 'closed' | 'archived'
+          unread_user_count?: number
+          unread_venue_count?: number
+          last_message_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      messages: {
+        Row: {
+          id: string
+          conversation_id: string
+          sender_id: string
+          content: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          conversation_id: string
+          sender_id: string
+          content: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          conversation_id?: string
+          sender_id?: string
+          content?: string
+          created_at?: string
+        }
+      }
     }
   }
 }

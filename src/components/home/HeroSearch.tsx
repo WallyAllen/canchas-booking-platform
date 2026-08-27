@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { DatePicker } from "@/components/ui/date-picker"
 import { TimePicker } from "@/components/ui/time-picker"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { format, addDays } from "date-fns"
 import gsap from "gsap"
 import { useGSAP } from "@gsap/react"
@@ -16,6 +17,7 @@ export function HeroSearch() {
   const [query, setQuery] = useState("")
   const [date, setDate] = useState("")
   const [timeRange, setTimeRange] = useState("")
+  const [matchType, setMatchType] = useState("")
   const containerRef = useRef<HTMLDivElement>(null)
 
   const todayStr = format(new Date(), "yyyy-MM-dd")
@@ -33,6 +35,7 @@ export function HeroSearch() {
     e.preventDefault()
     const params = new URLSearchParams()
     if (query) params.set("q", query)
+    if (matchType && matchType !== "all") params.set("type", matchType)
     if (date) params.set("date", date)
     if (timeRange) params.set("time", timeRange)
     
@@ -60,8 +63,29 @@ export function HeroSearch() {
         {/* Separador Desktop */}
         <div className="hidden md:block w-px bg-border my-2" />
 
+        {/* Tipo de Partido */}
+        <div className="relative flex-1 md:max-w-[140px] group flex items-center h-14">
+          <Select value={matchType} onValueChange={setMatchType}>
+            <SelectTrigger className="h-full w-full bg-background/50 border-0 focus:ring-1 focus:ring-primary focus:ring-offset-0 text-base">
+              <SelectValue placeholder="Tipo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Cualquiera</SelectItem>
+              <SelectItem value="F5">Fútbol 5</SelectItem>
+              <SelectItem value="F6">Fútbol 6</SelectItem>
+              <SelectItem value="F7">Fútbol 7</SelectItem>
+              <SelectItem value="F8">Fútbol 8</SelectItem>
+              <SelectItem value="F9">Fútbol 9</SelectItem>
+              <SelectItem value="F11">Fútbol 11</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Separador Desktop */}
+        <div className="hidden md:block w-px bg-border my-2" />
+
         {/* Fecha */}
-        <div className="relative flex-1 md:max-w-[340px] lg:max-w-[380px] group flex items-center bg-background/50 rounded-md p-1 gap-1 focus-within:ring-1 focus-within:ring-primary focus-within:ring-offset-0 transition-colors">
+        <div className="relative flex-1 md:max-w-[280px] lg:max-w-[320px] group flex items-center bg-background/50 rounded-md p-1 gap-1 focus-within:ring-1 focus-within:ring-primary focus-within:ring-offset-0 transition-colors">
           <Button
             type="button"
             variant={date === todayStr ? "secondary" : "ghost"}
@@ -84,6 +108,7 @@ export function HeroSearch() {
               value={date}
               onChange={setDate}
               placeholder="Fecha"
+              formatStr="d MMM"
               className="h-full w-full bg-transparent hover:bg-background border-0 shadow-none text-sm font-medium px-2 rounded-sm"
             />
           </div>
@@ -93,7 +118,7 @@ export function HeroSearch() {
         <div className="hidden md:block w-px bg-border my-2" />
 
         {/* Franja Horaria */}
-        <div className="relative flex-1 md:max-w-[200px] group flex items-center h-14">
+        <div className="relative flex-1 md:max-w-[160px] group flex items-center h-14">
           <TimePicker
             value={timeRange}
             onChange={setTimeRange}
@@ -103,7 +128,7 @@ export function HeroSearch() {
         </div>
 
         {/* Botón Buscar */}
-        <Button type="submit" size="lg" className="h-14 px-8 text-base font-semibold md:min-w-[140px]">
+        <Button type="submit" size="lg" className="h-14 px-8 text-base font-semibold md:min-w-[120px]">
           <Search className="mr-2 h-5 w-5" />
           Buscar
         </Button>

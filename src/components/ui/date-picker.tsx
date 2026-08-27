@@ -19,9 +19,10 @@ interface DatePickerProps {
   onChange: (value: string) => void
   placeholder?: string
   className?: string
+  formatStr?: string
 }
 
-export function DatePicker({ value, onChange, placeholder = "Seleccionar fecha", className }: DatePickerProps) {
+export function DatePicker({ value, onChange, placeholder = "Seleccionar fecha", className, formatStr = "PPP" }: DatePickerProps) {
   const [isOpen, setIsOpen] = React.useState(false)
 
   const dateValue = React.useMemo(() => {
@@ -49,8 +50,10 @@ export function DatePicker({ value, onChange, placeholder = "Seleccionar fecha",
           className
         )}
       >
-        <CalendarIcon className="mr-2 h-4 w-4" />
-        {dateValue ? format(dateValue, "PPP", { locale: es }) : <span className="truncate">{placeholder}</span>}
+        <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+        <span className="truncate">
+          {dateValue ? format(dateValue, formatStr, { locale: es }) : placeholder}
+        </span>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0" align="start">
         <div className="flex flex-col sm:flex-row divide-y sm:divide-y-0 sm:divide-x border-border">
