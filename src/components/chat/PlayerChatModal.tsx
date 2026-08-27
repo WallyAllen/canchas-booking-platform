@@ -123,11 +123,9 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <Button size="lg" className="w-full gap-2 font-semibold">
-          <MessageCircle className="h-5 w-5" />
-          Consultar a la cancha
-        </Button>
+      <DialogTrigger render={<Button size="lg" className="w-full gap-2 font-semibold" />}>
+        <MessageCircle className="h-5 w-5" />
+        Consultar a la cancha
       </DialogTrigger>
       
       <DialogContent className="sm:max-w-md h-[80vh] sm:h-[600px] flex flex-col p-0 overflow-hidden">

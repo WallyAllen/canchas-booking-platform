@@ -21,7 +21,7 @@ function SubmitButton() {
 }
 
 interface AdminChatThreadProps {
-  conversation: Record<string, unknown> & { id: string; user_id: string; created_at: string; profiles?: { avatar_url?: string; full_name?: string } }
+  conversation: (Record<string, unknown> & { id: string; user_id?: string; created_at?: string; profiles?: { avatar_url?: string; full_name?: string } }) | undefined
   onBack: () => void
 }
 
@@ -108,7 +108,7 @@ export function AdminChatThread({ conversation, onBack }: AdminChatThreadProps) 
         <div>
           <h3 className="font-semibold">{conversation.profiles?.full_name || 'Jugador Anónimo'}</h3>
           <p className="text-xs text-muted-foreground">
-            Iniciada el {format(new Date(conversation.created_at), "d 'de' MMMM", { locale: es })}
+            Iniciada el {format(new Date(conversation.created_at || new Date().toISOString()), "d 'de' MMMM", { locale: es })}
           </p>
         </div>
       </div>

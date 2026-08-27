@@ -65,7 +65,7 @@ export function HeroSearch() {
 
         {/* Tipo de Partido */}
         <div className="relative flex-1 md:max-w-[140px] group flex items-center h-14">
-          <Select value={matchType} onValueChange={setMatchType}>
+          <Select value={matchType} onValueChange={(val) => setMatchType(val || "")}>
             <SelectTrigger className="h-full w-full bg-background/50 border-0 focus:ring-1 focus:ring-primary focus:ring-offset-0 text-base">
               <SelectValue placeholder="Tipo" />
             </SelectTrigger>

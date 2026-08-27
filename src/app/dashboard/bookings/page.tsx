@@ -9,10 +9,11 @@ export default async function VenueBookingsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect("/login")
 
-  const { data: venues } = await supabase.from("venues")
+  const { data: venuesData } = await supabase.from("venues")
     .select("*, courts(id, name)")
     .eq("owner_id", user.id)
 
+  const venues = venuesData as unknown as Array<{ courts: Array<{ id: string; name: string }> }>
   const venue = venues?.[0]
   if (!venue) redirect("/dashboard")
 

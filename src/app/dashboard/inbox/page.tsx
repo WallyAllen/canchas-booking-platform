@@ -20,11 +20,13 @@ export default async function InboxPage() {
   }
 
   // Get user's venue (assuming 1 venue per admin for MVP)
-  const { data: venue } = await supabase
+  const { data: venueData } = await supabase
     .from("venues")
     .select("id")
     .eq("owner_id", user.id)
     .single()
+
+  const venue = venueData as unknown as { id: string }
 
   if (!venue) {
     return (
@@ -35,11 +37,13 @@ export default async function InboxPage() {
   }
 
   // 2. Load conversations
-  const { data: conversations } = await supabase
+  const { data: conversationsData } = await supabase
     .from("conversations")
     .select("*, profiles!user_id(full_name, avatar_url)")
     .eq("venue_id", venue.id)
     .order("last_message_at", { ascending: false, nullsFirst: false })
+    
+  const conversations = conversationsData as unknown as Array<Record<string, unknown> & { id: string; profiles?: { avatar_url?: string; full_name?: string }; last_message_at?: string; status?: string; unread_venue_count: number; created_at?: string }>
 
   return (
     <div className="space-y-6">

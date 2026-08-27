@@ -114,8 +114,8 @@ export function SearchFilters() {
           <div className="shrink-0 flex items-center w-[130px]">
             <Select 
               value={type} 
-              onValueChange={(val: string) => {
-                const newVal = val === "all" ? "" : val
+              onValueChange={(val) => {
+                const newVal = val === "all" ? "" : (val || "")
                 setType(newVal)
                 updateUrl({ type: newVal })
               }}
