@@ -5,10 +5,11 @@ import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { MessageCircle, Send } from "lucide-react"
+import { MessageCircle, Send, CheckCheck, Check, Paperclip, ImageIcon } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { startConversation, sendMessage, markConversationAsRead } from "@/app/actions/chat"
 import { format } from "date-fns"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 interface PlayerChatModalProps {
   venueId: string
@@ -20,6 +21,7 @@ interface Message {
   sender_id: string
   content: string
   created_at: string
+  image_url?: string | null
 }
 
 export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
@@ -72,6 +74,8 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
     }
   }, [isOpen, userId, conversationId, venueId])
 
+  const [unreadVenueCount, setUnreadVenueCount] = useState(0)
+
   // Load messages and subscribe when conversation is active
   useEffect(() => {
     if (!conversationId || !isOpen) return
@@ -84,6 +88,15 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
         .order("created_at", { ascending: true })
       
       if (data) setMessages(data)
+      
+      // Load conversation unread count
+      const { data: conv } = await (supabase
+        .from("conversations") as any)
+        .select("unread_venue_count")
+        .eq("id", conversationId)
+        .single()
+      
+      if (conv) setUnreadVenueCount(conv.unread_venue_count)
       
       // Mark as read
       await markConversationAsRead(conversationId, 'user')
@@ -103,6 +116,12 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
           }
         }
       )
+      .on('postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'conversations', filter: `id=eq.${conversationId}` },
+        (payload: any) => {
+          setUnreadVenueCount(payload.new.unread_venue_count)
+        }
+      )
       .subscribe()
 
     return () => {
@@ -116,6 +135,38 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
   }, [messages])
+
+  const [isUploading, setIsUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file || !conversationId) return
+    
+    setIsUploading(true)
+    try {
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${conversationId}/${Date.now()}.${fileExt}`
+      
+      const { data, error } = await supabase.storage
+        .from('chat-images')
+        .upload(fileName, file)
+        
+      if (error) throw error
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from('chat-images')
+        .getPublicUrl(fileName)
+        
+      await sendMessage(conversationId, '🖼️ Imagen adjunta', publicUrl)
+    } catch (e: any) {
+      alert("Error al subir imagen: " + (e.message || "Desconocido"))
+      console.error(e)
+    } finally {
+      setIsUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
 
   const handleSend = async (e: React.FormEvent | React.MouseEvent) => {
     e.preventDefault()
@@ -145,7 +196,10 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
       
       <DialogContent className="sm:max-w-md h-[80vh] sm:h-[600px] flex flex-col p-0 overflow-hidden">
         <DialogHeader className="p-4 border-b border-border/50 bg-muted/20 shrink-0">
-          <DialogTitle className="flex items-center gap-2 text-lg">
+          <DialogTitle className="flex items-center gap-3 text-lg">
+            <Avatar className="h-8 w-8">
+              <AvatarFallback className="bg-primary/10 text-primary">{venueName.substring(0, 2).toUpperCase()}</AvatarFallback>
+            </Avatar>
             Chat con {venueName}
           </DialogTitle>
         </DialogHeader>
@@ -167,16 +221,35 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
                   <p>Iniciá la conversación</p>
                 </div>
               ) : (
-                messages.map(msg => {
+                messages.map((msg, index) => {
                   const isMe = msg.sender_id === userId
+                  const isLastMessage = index === messages.length - 1
+                  const isRead = isMe && unreadVenueCount === 0 && isLastMessage
+                  
                   return (
-                    <div key={msg.id} className={`flex flex-col max-w-[80%] ${isMe ? 'ml-auto items-end' : 'mr-auto items-start'}`}>
-                      <div className={`px-4 py-2 rounded-2xl ${isMe ? 'bg-primary text-primary-foreground rounded-tr-sm' : 'bg-muted rounded-tl-sm'}`}>
-                        {msg.content}
+                    <div key={msg.id} className={`flex items-end gap-2 ${isMe ? 'ml-auto flex-row-reverse' : 'mr-auto'} max-w-[85%]`}>
+                      {!isMe && (
+                        <Avatar className="h-6 w-6 shrink-0 mb-1">
+                          <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+                            {venueName.substring(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                      )}
+                      
+                      <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                        <div className={`px-4 py-2 rounded-2xl ${isMe ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-muted rounded-bl-sm'}`}>
+                          {msg.image_url && (
+                            <img src={msg.image_url} alt="Adjunto" className="max-w-[200px] sm:max-w-[250px] rounded-md mb-2 object-cover" />
+                          )}
+                          <div className="break-words">{msg.content}</div>
+                        </div>
+                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground mt-1 px-1">
+                          <span>{format(new Date(msg.created_at), "HH:mm")}</span>
+                          {isMe && isLastMessage && (
+                            isRead ? <CheckCheck className="h-3 w-3 text-blue-500" /> : <Check className="h-3 w-3" />
+                          )}
+                        </div>
                       </div>
-                      <span className="text-[10px] text-muted-foreground mt-1 px-1">
-                        {format(new Date(msg.created_at), "HH:mm")}
-                      </span>
                     </div>
                   )
                 })
@@ -184,15 +257,34 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
             </div>
             
             <form onSubmit={handleSend} className="p-3 border-t border-border/50 bg-muted/10 shrink-0 flex gap-2 items-center">
+              <input 
+                type="file" 
+                accept="image/*" 
+                className="hidden" 
+                ref={fileInputRef}
+                onChange={handleImageUpload}
+              />
+              <Button 
+                type="button" 
+                variant="ghost" 
+                size="icon" 
+                className="h-10 w-10 shrink-0 text-muted-foreground hover:text-foreground"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+              >
+                <Paperclip className="h-5 w-5" />
+              </Button>
+              
               <Input
                 name="message"
                 value={inputValue}
                 onChange={e => setInputValue(e.target.value)}
-                placeholder="Escribe un mensaje..."
+                placeholder={isUploading ? "Subiendo imagen..." : "Escribe un mensaje..."}
                 className="flex-1 bg-background"
                 autoComplete="off"
+                disabled={isUploading}
               />
-              <button type="submit" onClick={handleSend} className="h-10 w-10 shrink-0 inline-flex items-center justify-center rounded-lg bg-primary text-primary-foreground hover:bg-primary/80 transition-colors">
+              <button type="submit" disabled={isUploading || (!inputValue.trim() && !isUploading)} className="h-10 w-10 shrink-0 inline-flex items-center justify-center rounded-lg bg-primary text-primary-foreground hover:bg-primary/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                 <Send className="h-4 w-4" />
               </button>
             </form>

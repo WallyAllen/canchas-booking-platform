@@ -7,7 +7,7 @@ import { Resend } from "resend"
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 
-export async function sendMessage(conversationId: string, content: string) {
+export async function sendMessage(conversationId: string, content: string, imageUrl?: string) {
   const supabase = await createClient()
   
   const { data: userData, error: userError } = await supabase.auth.getUser()
@@ -34,7 +34,8 @@ export async function sendMessage(conversationId: string, content: string) {
     .insert({
       conversation_id: conversationId,
       sender_id: userId,
-      content: content
+      content: content,
+      image_url: imageUrl || null
     })
     
   if (insertError) {

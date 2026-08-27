@@ -9,7 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { toast } from "@/components/ui/toast"
-import { Trash2, Plus, Image as ImageIcon, Loader2 } from "lucide-react"
+import { Trash2, Plus, Image as ImageIcon, Loader2, Upload } from "lucide-react"
+import { useRef } from "react"
 
 interface VenuePhotosFormProps {
   venueId: string
@@ -20,14 +21,53 @@ export function VenuePhotosForm({ venueId, initialPhotos }: VenuePhotosFormProps
   const [photos, setPhotos] = useState<string[]>(initialPhotos || [])
   const [newPhotoUrl, setNewPhotoUrl] = useState("")
   const [isSaving, setIsSaving] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsUploading(true)
+    try {
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${venueId}/${Date.now()}.${fileExt}`
+      
+      const { error: uploadError } = await supabase.storage
+        .from('venue-photos')
+        .upload(fileName, file)
+        
+      if (uploadError) throw uploadError
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from('venue-photos')
+        .getPublicUrl(fileName)
+        
+      setPhotos([...photos, publicUrl])
+      toast.add({
+        title: "Foto subida",
+        description: "La foto se ha subido correctamente. Recuerda guardar la galería.",
+      })
+    } catch (error) {
+      console.error(error)
+      toast.add({
+        type: "error",
+        title: "Error al subir",
+        description: "No se pudo subir la foto. Intenta nuevamente.",
+      })
+    } finally {
+      setIsUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
+  }
 
   const handleAddPhoto = () => {
     if (!newPhotoUrl.trim()) {
       toast.add({
         type: "error",
         title: "Ingresa un enlace",
-        description: "Por favor, pega la URL de una foto. La subida de archivos directos estará disponible próximamente.",
+        description: "Por favor, pega la URL de una foto o usa el botón de subir archivo.",
       })
       return
     }
@@ -81,30 +121,54 @@ export function VenuePhotosForm({ venueId, initialPhotos }: VenuePhotosFormProps
       <CardHeader>
         <CardTitle>Galería de Fotos</CardTitle>
         <CardDescription>
-          Agrega imágenes mediante URL (ej. Unsplash, Imgur) para mostrar tu predio a los jugadores. La primera foto será la portada.
+          Sube imágenes desde tu dispositivo o agrega mediante URL (ej. Unsplash, Imgur) para mostrar tu predio a los jugadores. La primera foto será la portada.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <ImageIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="https://ejemplo.com/foto.jpg" 
-              className="pl-9"
-              value={newPhotoUrl}
-              onChange={(e) => setNewPhotoUrl(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault()
-                  handleAddPhoto()
-                }
-              }}
+        <div className="flex flex-col sm:flex-row gap-4 sm:gap-2">
+          <div className="flex flex-1 gap-2">
+            <input 
+              type="file" 
+              accept="image/*" 
+              className="hidden" 
+              ref={fileInputRef}
+              onChange={handleFileUpload}
             />
+            <Button 
+              type="button" 
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              className="w-full sm:w-auto shrink-0"
+            >
+              {isUploading ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Upload className="h-4 w-4 mr-2" />
+              )}
+              Subir desde equipo
+            </Button>
+            
+            <div className="relative flex-1 hidden sm:block">
+              <ImageIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input 
+                placeholder="https://ejemplo.com/foto.jpg" 
+                className="pl-9"
+                value={newPhotoUrl}
+                onChange={(e) => setNewPhotoUrl(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    handleAddPhoto()
+                  }
+                }}
+              />
+            </div>
+            <Button type="button" onClick={handleAddPhoto} variant="secondary" className="hidden sm:inline-flex">
+              <Plus className="h-4 w-4 mr-2" />
+              URL
+            </Button>
           </div>
-          <Button type="button" onClick={handleAddPhoto} variant="secondary">
-            <Plus className="h-4 w-4 mr-2" />
-            Agregar
-          </Button>
         </div>
 
         {photos.length > 0 ? (
