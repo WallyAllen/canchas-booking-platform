@@ -36,6 +36,9 @@ export function AdminChatThread({ conversation, onBack }: AdminChatThreadProps) 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
 
+  const [isOtherTyping, setIsOtherTyping] = useState(false)
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
   useEffect(() => {
     if (!conversation?.id) return
     
@@ -59,7 +62,9 @@ export function AdminChatThread({ conversation, onBack }: AdminChatThreadProps) 
     loadMessages()
 
     const channel = supabase
-      .channel(`admin_chat_${conversation.id}`)
+      .channel(`chat_${conversation.id}`, {
+        config: { broadcast: { ack: false } }
+      })
       .on('postgres_changes', 
         { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${conversation.id}` },
         (payload) => {
@@ -73,6 +78,11 @@ export function AdminChatThread({ conversation, onBack }: AdminChatThreadProps) 
           setUnreadUserCount(payload.new.unread_user_count)
         }
       )
+      .on('broadcast', { event: 'typing' }, (payload) => {
+        if (payload.payload.senderType === 'user') {
+          setIsOtherTyping(payload.payload.isTyping)
+        }
+      })
       .subscribe()
 
     return () => {
@@ -85,7 +95,29 @@ export function AdminChatThread({ conversation, onBack }: AdminChatThreadProps) 
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
-  }, [messages])
+  }, [messages, isOtherTyping])
+
+  const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputValue(e.target.value)
+    
+    if (!conversation?.id) return
+    
+    supabase.channel(`chat_${conversation.id}`).send({
+      type: 'broadcast',
+      event: 'typing',
+      payload: { isTyping: true, senderType: 'venue' }
+    })
+    
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+    
+    typingTimeoutRef.current = setTimeout(() => {
+      supabase.channel(`chat_${conversation.id}`).send({
+        type: 'broadcast',
+        event: 'typing',
+        payload: { isTyping: false, senderType: 'venue' }
+      })
+    }, 2000)
+  }
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -176,25 +208,47 @@ export function AdminChatThread({ conversation, onBack }: AdminChatThreadProps) 
             const isMe = msg.sender_id !== conversation.user_id
             const isLastMessage = index === messages.length - 1
             const isRead = isMe && unreadUserCount === 0 && isLastMessage
+            
+            const msgDate = new Date(msg.created_at)
+            const prevMsgDate = index > 0 ? new Date(messages[index - 1].created_at) : null
+            const showDate = !prevMsgDate || msgDate.toDateString() !== prevMsgDate.toDateString()
 
             return (
-              <div key={msg.id} className={`flex flex-col max-w-[75%] md:max-w-[60%] ${isMe ? 'ml-auto items-end' : 'mr-auto items-start'}`}>
-                <div className={`px-4 py-2 rounded-2xl ${isMe ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-muted rounded-bl-sm'}`}>
-                  {msg.image_url && (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img src={msg.image_url} alt="Adjunto" className="max-w-[200px] sm:max-w-[300px] rounded-md mb-2 object-cover" />
-                  )}
-                  <div className="break-words">{msg.content}</div>
-                </div>
-                <div className="flex items-center gap-1 text-[10px] text-muted-foreground mt-1 px-1">
-                  <span>{format(new Date(msg.created_at), "HH:mm")}</span>
-                  {isMe && isLastMessage && (
-                    isRead ? <CheckCheck className="h-3 w-3 text-blue-500" /> : <Check className="h-3 w-3" />
-                  )}
+              <div key={msg.id}>
+                {showDate && (
+                  <div className="flex items-center justify-center my-4">
+                    <span className="bg-muted px-3 py-1 rounded-full text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+                      {format(msgDate, "d 'de' MMMM", { locale: es })}
+                    </span>
+                  </div>
+                )}
+                <div className={`flex flex-col max-w-[75%] md:max-w-[60%] ${isMe ? 'ml-auto items-end' : 'mr-auto items-start'} mb-4`}>
+                  <div className={`px-4 py-2 rounded-2xl ${isMe ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-muted rounded-bl-sm'}`}>
+                    {msg.image_url && (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img src={msg.image_url} alt="Adjunto" className="max-w-[200px] sm:max-w-[300px] rounded-md mb-2 object-cover" />
+                    )}
+                    <div className="break-words">{msg.content}</div>
+                  </div>
+                  <div className="flex items-center gap-1 text-[10px] text-muted-foreground mt-1 px-1">
+                    <span>{format(new Date(msg.created_at), "HH:mm")}</span>
+                    {isMe && isLastMessage && (
+                      isRead ? <CheckCheck className="h-3 w-3 text-blue-500" /> : <Check className="h-3 w-3" />
+                    )}
+                  </div>
                 </div>
               </div>
             )
           })
+        )}
+        {isOtherTyping && (
+          <div className="flex flex-col mr-auto items-start mb-4">
+            <div className="bg-muted rounded-2xl rounded-bl-sm px-4 py-3 flex gap-1 items-center h-9">
+              <span className="w-1.5 h-1.5 bg-muted-foreground/60 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+              <span className="w-1.5 h-1.5 bg-muted-foreground/60 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+              <span className="w-1.5 h-1.5 bg-muted-foreground/60 rounded-full animate-bounce"></span>
+            </div>
+          </div>
         )}
       </div>
       
@@ -221,7 +275,7 @@ export function AdminChatThread({ conversation, onBack }: AdminChatThreadProps) 
         <Input
           name="message"
           value={inputValue}
-          onChange={e => setInputValue(e.target.value)}
+          onChange={handleTyping}
           placeholder={isUploading ? "Subiendo..." : isSending ? "Enviando..." : "Escribe una respuesta..."}
           className="flex-1 bg-background"
           autoComplete="off"

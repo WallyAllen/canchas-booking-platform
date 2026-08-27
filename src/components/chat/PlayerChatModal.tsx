@@ -9,6 +9,7 @@ import { MessageCircle, Send, CheckCheck, Check, Paperclip } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { startConversation, sendMessage, markConversationAsRead } from "@/app/actions/chat"
 import { format } from "date-fns"
+import { es } from "date-fns/locale"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
 interface PlayerChatModalProps {
@@ -75,6 +76,8 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
   }, [isOpen, userId, conversationId, venueId])
 
   const [unreadVenueCount, setUnreadVenueCount] = useState(0)
+  const [isOtherTyping, setIsOtherTyping] = useState(false)
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Load messages and subscribe when conversation is active
   useEffect(() => {
@@ -105,7 +108,9 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
     loadMessages()
 
     const channel = supabase
-      .channel(`chat_${conversationId}`)
+      .channel(`chat_${conversationId}`, {
+        config: { broadcast: { ack: false } }
+      })
       .on('postgres_changes', 
         { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${conversationId}` },
         (payload) => {
@@ -122,6 +127,11 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
           setUnreadVenueCount(payload.new.unread_venue_count)
         }
       )
+      .on('broadcast', { event: 'typing' }, (payload) => {
+        if (payload.payload.senderType === 'venue') {
+          setIsOtherTyping(payload.payload.isTyping)
+        }
+      })
       .subscribe()
 
     return () => {
@@ -134,7 +144,29 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
-  }, [messages])
+  }, [messages, isOtherTyping])
+
+  const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputValue(e.target.value)
+    
+    if (!conversationId) return
+    
+    supabase.channel(`chat_${conversationId}`).send({
+      type: 'broadcast',
+      event: 'typing',
+      payload: { isTyping: true, senderType: 'user' }
+    })
+    
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+    
+    typingTimeoutRef.current = setTimeout(() => {
+      supabase.channel(`chat_${conversationId}`).send({
+        type: 'broadcast',
+        event: 'typing',
+        payload: { isTyping: false, senderType: 'user' }
+      })
+    }, 2000)
+  }
 
   const [isUploading, setIsUploading] = useState(false)
   const [isSending, setIsSending] = useState(false)
@@ -230,34 +262,61 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
                   const isLastMessage = index === messages.length - 1
                   const isRead = isMe && unreadVenueCount === 0 && isLastMessage
                   
+                  const msgDate = new Date(msg.created_at)
+                  const prevMsgDate = index > 0 ? new Date(messages[index - 1].created_at) : null
+                  const showDate = !prevMsgDate || msgDate.toDateString() !== prevMsgDate.toDateString()
+                  
                   return (
-                    <div key={msg.id} className={`flex items-end gap-2 ${isMe ? 'ml-auto flex-row-reverse' : 'mr-auto'} max-w-[85%]`}>
-                      {!isMe && (
-                        <Avatar className="h-6 w-6 shrink-0 mb-1">
-                          <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
-                            {venueName.substring(0, 2).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                      )}
-                      
-                      <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                        <div className={`px-4 py-2 rounded-2xl ${isMe ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-muted rounded-bl-sm'}`}>
-                          {msg.image_url && (
-                            /* eslint-disable-next-line @next/next/no-img-element */
-                            <img src={msg.image_url} alt="Adjunto" className="max-w-[200px] sm:max-w-[250px] rounded-md mb-2 object-cover" />
-                          )}
-                          <div className="break-words">{msg.content}</div>
+                    <div key={msg.id}>
+                      {showDate && (
+                        <div className="flex items-center justify-center my-4">
+                          <span className="bg-muted px-3 py-1 rounded-full text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+                            {format(msgDate, "d 'de' MMMM", { locale: es })}
+                          </span>
                         </div>
-                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground mt-1 px-1">
-                          <span>{format(new Date(msg.created_at), "HH:mm")}</span>
-                          {isMe && isLastMessage && (
-                            isRead ? <CheckCheck className="h-3 w-3 text-blue-500" /> : <Check className="h-3 w-3" />
-                          )}
+                      )}
+                      <div className={`flex items-end gap-2 ${isMe ? 'ml-auto flex-row-reverse' : 'mr-auto'} max-w-[85%] mb-4`}>
+                        {!isMe && (
+                          <Avatar className="h-6 w-6 shrink-0 mb-1">
+                            <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+                              {venueName.substring(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                        )}
+                        
+                        <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                          <div className={`px-4 py-2 rounded-2xl ${isMe ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-muted rounded-bl-sm'}`}>
+                            {msg.image_url && (
+                              /* eslint-disable-next-line @next/next/no-img-element */
+                              <img src={msg.image_url} alt="Adjunto" className="max-w-[200px] sm:max-w-[250px] rounded-md mb-2 object-cover" />
+                            )}
+                            <div className="break-words">{msg.content}</div>
+                          </div>
+                          <div className="flex items-center gap-1 text-[10px] text-muted-foreground mt-1 px-1">
+                            <span>{format(new Date(msg.created_at), "HH:mm")}</span>
+                            {isMe && isLastMessage && (
+                              isRead ? <CheckCheck className="h-3 w-3 text-blue-500" /> : <Check className="h-3 w-3" />
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
                   )
                 })
+              )}
+              {isOtherTyping && (
+                <div className="flex items-end gap-2 mr-auto max-w-[85%] mb-4">
+                  <Avatar className="h-6 w-6 shrink-0 mb-1">
+                    <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
+                      {venueName.substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="bg-muted rounded-2xl rounded-bl-sm px-4 py-3 flex gap-1 items-center h-9">
+                    <span className="w-1.5 h-1.5 bg-muted-foreground/60 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+                    <span className="w-1.5 h-1.5 bg-muted-foreground/60 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+                    <span className="w-1.5 h-1.5 bg-muted-foreground/60 rounded-full animate-bounce"></span>
+                  </div>
+                </div>
               )}
             </div>
             
@@ -283,7 +342,7 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
               <Input
                 name="message"
                 value={inputValue}
-                onChange={e => setInputValue(e.target.value)}
+                onChange={handleTyping}
                 placeholder={isUploading ? "Subiendo imagen..." : isSending ? "Enviando..." : "Escribe un mensaje..."}
                 className="flex-1 bg-background"
                 autoComplete="off"
