@@ -44,9 +44,12 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
     setIsOpen(open)
   }
 
+  const hasFetched = useRef(false)
+
   // Initialize conversation when modal is open and user is loaded
   useEffect(() => {
-    if (isOpen && userId && !conversationId && !isLoading) {
+    if (isOpen && userId && !conversationId && !hasFetched.current) {
+      hasFetched.current = true;
       let isMounted = true;
       const initChat = async () => {
         setIsLoading(true)
@@ -62,7 +65,12 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
       initChat()
       return () => { isMounted = false }
     }
-  }, [isOpen, userId, conversationId, venueId, isLoading])
+    
+    // Reset fetch state when modal closes
+    if (!isOpen) {
+      hasFetched.current = false;
+    }
+  }, [isOpen, userId, conversationId, venueId])
 
   // Load messages and subscribe when conversation is active
   useEffect(() => {
