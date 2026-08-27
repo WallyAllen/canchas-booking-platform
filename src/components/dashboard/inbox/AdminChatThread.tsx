@@ -68,7 +68,7 @@ export function AdminChatThread({ conversation, onBack }: AdminChatThreadProps) 
     }
   }, [messages])
 
-  const handleSend = async (e: React.FormEvent) => {
+  const handleSend = async (e: React.FormEvent | React.MouseEvent) => {
     e.preventDefault()
     if (!inputValue || !inputValue.trim() || !conversation?.id) return
     
@@ -143,7 +143,7 @@ export function AdminChatThread({ conversation, onBack }: AdminChatThreadProps) 
           className="flex-1 bg-background"
           autoComplete="off"
         />
-        <Button type="submit" size="icon" className="h-10 w-10 shrink-0">
+        <Button type="submit" onClick={handleSend} size="icon" className="h-10 w-10 shrink-0">
           <Send className="h-4 w-4" />
         </Button>
       </form>

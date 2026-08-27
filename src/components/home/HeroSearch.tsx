@@ -31,7 +31,7 @@ export function HeroSearch() {
     )
   }, { scope: containerRef })
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = (e: React.FormEvent | React.MouseEvent) => {
     e.preventDefault()
     const params = new URLSearchParams()
     if (query) params.set("q", query)
@@ -128,7 +128,7 @@ export function HeroSearch() {
         </div>
 
         {/* Botón Buscar */}
-        <Button type="submit" size="lg" className="h-14 px-8 text-base font-semibold md:min-w-[120px]">
+        <Button type="submit" onClick={handleSearch} size="lg" className="h-14 px-8 text-base font-semibold md:min-w-[120px]">
           <Search className="mr-2 h-5 w-5" />
           Buscar
         </Button>
