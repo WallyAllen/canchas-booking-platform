@@ -70,7 +70,12 @@ export function AdminChatThread({ conversation, onBack }: AdminChatThreadProps) 
 
   const handleSend = async (e: React.FormEvent | React.MouseEvent) => {
     e.preventDefault()
-    if (!inputValue || !inputValue.trim() || !conversation?.id) return
+    if (!inputValue || !inputValue.trim()) return
+    
+    if (!conversation?.id) {
+      alert("Error: No se encontró la conversación activa.")
+      return
+    }
     
     const text = inputValue.trim()
     try {
@@ -143,9 +148,9 @@ export function AdminChatThread({ conversation, onBack }: AdminChatThreadProps) 
           className="flex-1 bg-background"
           autoComplete="off"
         />
-        <Button type="submit" onClick={handleSend} size="icon" className="h-10 w-10 shrink-0">
+        <button type="submit" onClick={handleSend} className="h-10 w-10 shrink-0 inline-flex items-center justify-center rounded-lg bg-primary text-primary-foreground hover:bg-primary/80 transition-colors">
           <Send className="h-4 w-4" />
-        </Button>
+        </button>
       </form>
     </div>
   )

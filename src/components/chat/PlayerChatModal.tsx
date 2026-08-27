@@ -40,20 +40,29 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
   }, [supabase.auth])
 
   // Handle open
-  const handleOpenChange = async (open: boolean) => {
+  const handleOpenChange = (open: boolean) => {
     setIsOpen(open)
-    if (open && userId && !conversationId) {
-      setIsLoading(true)
-      try {
-        const { conversationId: cid } = await startConversation(venueId)
-        setConversationId(cid)
-      } catch (e) {
-        console.error(e)
-      } finally {
-        setIsLoading(false)
-      }
-    }
   }
+
+  // Initialize conversation when modal is open and user is loaded
+  useEffect(() => {
+    if (isOpen && userId && !conversationId && !isLoading) {
+      let isMounted = true;
+      const initChat = async () => {
+        setIsLoading(true)
+        try {
+          const { conversationId: cid } = await startConversation(venueId)
+          if (isMounted) setConversationId(cid)
+        } catch (e) {
+          console.error(e)
+        } finally {
+          if (isMounted) setIsLoading(false)
+        }
+      }
+      initChat()
+      return () => { isMounted = false }
+    }
+  }, [isOpen, userId, conversationId, venueId, isLoading])
 
   // Load messages and subscribe when conversation is active
   useEffect(() => {
@@ -102,7 +111,12 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
 
   const handleSend = async (e: React.FormEvent | React.MouseEvent) => {
     e.preventDefault()
-    if (!inputValue || !inputValue.trim() || !conversationId) return
+    if (!inputValue || !inputValue.trim()) return
+    
+    if (!conversationId) {
+      alert("La conversación aún no está inicializada. Por favor, recarga o vuelve a abrir el chat.")
+      return
+    }
     
     const text = inputValue.trim()
     try {
@@ -170,9 +184,9 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
                 className="flex-1 bg-background"
                 autoComplete="off"
               />
-              <Button type="submit" onClick={handleSend} size="icon" className="h-10 w-10 shrink-0">
+              <button type="submit" onClick={handleSend} className="h-10 w-10 shrink-0 inline-flex items-center justify-center rounded-lg bg-primary text-primary-foreground hover:bg-primary/80 transition-colors">
                 <Send className="h-4 w-4" />
-              </Button>
+              </button>
             </form>
           </>
         )}
