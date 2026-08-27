@@ -3,7 +3,7 @@
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { User, MessageCircle } from "lucide-react"
-import Image from "next/image"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 interface ConversationListProps {
   conversations: Array<Record<string, unknown> & { id: string; profiles?: { avatar_url?: string; full_name?: string }; last_message_at?: string; status?: string; unread_venue_count: number }>
@@ -30,13 +30,12 @@ export function ConversationList({ conversations, activeId, onSelect }: Conversa
           className={`w-full text-left p-4 border-b border-border/50 transition-colors flex gap-3 items-center
             ${activeId === conv.id ? 'bg-primary/10 border-l-4 border-l-primary' : 'hover:bg-muted/30 border-l-4 border-l-transparent'}`}
         >
-          <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center shrink-0 relative overflow-hidden">
-            {conv.profiles?.avatar_url ? (
-               <Image src={conv.profiles.avatar_url} alt="" fill className="object-cover" />
-            ) : (
-               <User className="h-5 w-5 text-muted-foreground" />
-            )}
-          </div>
+          <Avatar className="h-10 w-10">
+            <AvatarImage src={conv.profiles?.avatar_url || ''} />
+            <AvatarFallback className="bg-muted">
+              <User className="h-5 w-5 text-muted-foreground" />
+            </AvatarFallback>
+          </Avatar>
           <div className="flex-1 min-w-0">
             <div className="flex justify-between items-baseline mb-1">
               <span className="font-semibold text-sm truncate pr-2">

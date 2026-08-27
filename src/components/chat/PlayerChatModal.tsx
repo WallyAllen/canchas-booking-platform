@@ -137,6 +137,7 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
   }, [messages])
 
   const [isUploading, setIsUploading] = useState(false)
+  const [isSending, setIsSending] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -170,13 +171,14 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
 
   const handleSend = async (e: React.FormEvent | React.MouseEvent) => {
     e.preventDefault()
-    if (!inputValue || !inputValue.trim()) return
+    if (!inputValue || !inputValue.trim() || isSending) return
     
     if (!conversationId) {
       alert("La conversación aún no está inicializada. Por favor, recarga o vuelve a abrir el chat.")
       return
     }
     
+    setIsSending(true)
     const text = inputValue.trim()
     try {
       await sendMessage(conversationId, text)
@@ -184,6 +186,8 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
     } catch (e: any) {
       alert("Error al enviar: " + (e.message || "Desconocido"))
       console.error(e)
+    } finally {
+      setIsSending(false)
     }
   }
 
@@ -271,7 +275,7 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
                 size="icon" 
                 className="h-10 w-10 shrink-0 text-muted-foreground hover:text-foreground"
                 onClick={() => fileInputRef.current?.click()}
-                disabled={isUploading}
+                disabled={isUploading || isSending}
               >
                 <Paperclip className="h-5 w-5" />
               </Button>
@@ -280,12 +284,12 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
                 name="message"
                 value={inputValue}
                 onChange={e => setInputValue(e.target.value)}
-                placeholder={isUploading ? "Subiendo imagen..." : "Escribe un mensaje..."}
+                placeholder={isUploading ? "Subiendo imagen..." : isSending ? "Enviando..." : "Escribe un mensaje..."}
                 className="flex-1 bg-background"
                 autoComplete="off"
-                disabled={isUploading}
+                disabled={isUploading || isSending}
               />
-              <button type="submit" disabled={isUploading || (!inputValue.trim() && !isUploading)} className="h-10 w-10 shrink-0 inline-flex items-center justify-center rounded-lg bg-primary text-primary-foreground hover:bg-primary/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+              <button type="submit" disabled={isUploading || isSending || (!inputValue.trim() && !isUploading)} className="h-10 w-10 shrink-0 inline-flex items-center justify-center rounded-lg bg-primary text-primary-foreground hover:bg-primary/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
                 <Send className="h-4 w-4" />
               </button>
             </form>
