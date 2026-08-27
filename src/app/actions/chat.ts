@@ -5,7 +5,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { Resend } from "resend"
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 
 export async function sendMessage(conversationId: string, content: string) {
   const supabase = await createClient()
@@ -55,7 +55,7 @@ export async function sendMessage(conversationId: string, content: string) {
       
     const owner = ownerData as any
       
-    if (owner && owner.email && process.env.RESEND_API_KEY) {
+    if (owner && owner.email && resend) {
       try {
         await resend.emails.send({
           from: 'ReservaYa <mensajes@reservaya.com>',
