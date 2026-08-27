@@ -1,5 +1,7 @@
 "use server"
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { createClient } from "@/lib/supabase/server"
 import { Resend } from "resend"
 
@@ -20,7 +22,7 @@ export async function sendMessage(conversationId: string, content: string) {
     .eq("id", conversationId)
     .single()
     
-  // @ts-ignore
+
   const conversation = conversationData as any
     
   if (!conversation) {

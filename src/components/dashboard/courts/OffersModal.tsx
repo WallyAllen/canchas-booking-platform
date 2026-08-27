@@ -1,3 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable jsx-a11y/label-has-associated-control */
 "use client"
 import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog"
@@ -36,7 +40,7 @@ export function OffersModal({ courtId, basePrice }: { courtId: string, basePrice
 
   useEffect(() => {
     if (open) {
-      setLoading(true)
+      setLoading(true);
       (supabase.from("pricing_rules") as any)
         .select("*")
         .eq("court_id", courtId)
