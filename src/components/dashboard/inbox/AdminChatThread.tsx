@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input"
 import { ArrowLeft, Send, User, Check, CheckCheck, Paperclip } from "lucide-react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
-import Image from "next/image"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 
 interface Message {
@@ -96,7 +95,7 @@ export function AdminChatThread({ conversation, onBack }: AdminChatThreadProps) 
       const fileExt = file.name.split('.').pop()
       const fileName = `${conversation.id}/${Date.now()}.${fileExt}`
       
-      const { data, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from('chat-images')
         .upload(fileName, file)
         
@@ -178,6 +177,7 @@ export function AdminChatThread({ conversation, onBack }: AdminChatThreadProps) 
               <div key={msg.id} className={`flex flex-col max-w-[75%] md:max-w-[60%] ${isMe ? 'ml-auto items-end' : 'mr-auto items-start'}`}>
                 <div className={`px-4 py-2 rounded-2xl ${isMe ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-muted rounded-bl-sm'}`}>
                   {msg.image_url && (
+                    /* eslint-disable-next-line @next/next/no-img-element */
                     <img src={msg.image_url} alt="Adjunto" className="max-w-[200px] sm:max-w-[300px] rounded-md mb-2 object-cover" />
                   )}
                   <div className="break-words">{msg.content}</div>

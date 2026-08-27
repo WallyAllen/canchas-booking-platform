@@ -5,11 +5,11 @@ import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { MessageCircle, Send, CheckCheck, Check, Paperclip, ImageIcon } from "lucide-react"
+import { MessageCircle, Send, CheckCheck, Check, Paperclip } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { startConversation, sendMessage, markConversationAsRead } from "@/app/actions/chat"
 import { format } from "date-fns"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 
 interface PlayerChatModalProps {
   venueId: string
@@ -148,7 +148,7 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
       const fileExt = file.name.split('.').pop()
       const fileName = `${conversationId}/${Date.now()}.${fileExt}`
       
-      const { data, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from('chat-images')
         .upload(fileName, file)
         
@@ -239,6 +239,7 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
                       <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                         <div className={`px-4 py-2 rounded-2xl ${isMe ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-muted rounded-bl-sm'}`}>
                           {msg.image_url && (
+                            /* eslint-disable-next-line @next/next/no-img-element */
                             <img src={msg.image_url} alt="Adjunto" className="max-w-[200px] sm:max-w-[250px] rounded-md mb-2 object-cover" />
                           )}
                           <div className="break-words">{msg.content}</div>
