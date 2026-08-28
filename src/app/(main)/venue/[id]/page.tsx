@@ -11,7 +11,7 @@ import { VenueMap } from "@/components/map/VenueMap"
 import { PlayerChatModal } from "@/components/chat/PlayerChatModal"
 import { MapPin, Phone, CheckCircle2, Loader2 } from "lucide-react"
 import { Suspense } from "react"
-import type { Metadata, ResolvingMetadata } from "next"
+import type { Metadata } from "next"
 
 // Data fetching function wrapped in unstable_cache for high-performance ISR
 const getVenueData = unstable_cache(
@@ -75,8 +75,7 @@ const getVenueData = unstable_cache(
 )
 
 export async function generateMetadata(
-  { params }: { params: { id: string } },
-  parent: ResolvingMetadata
+  { params }: { params: { id: string } }
 ): Promise<Metadata> {
   const data = await getVenueData(params.id)
   
