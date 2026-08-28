@@ -43,7 +43,7 @@ export function HeroSearch() {
   }
 
   return (
-    <div ref={containerRef} className="hero-search-container w-full max-w-5xl mx-auto glass-panel rounded-2xl p-2 sm:p-3 invisible">
+    <div ref={containerRef} className="hero-search-container w-full max-w-5xl mx-auto bg-zinc-950 border border-white/10 shadow-2xl rounded-2xl p-2 sm:p-3 invisible">
       <form onSubmit={handleSearch} className="flex flex-col md:flex-row gap-2">
         
         {/* Búsqueda por Zona/Nombre */}
