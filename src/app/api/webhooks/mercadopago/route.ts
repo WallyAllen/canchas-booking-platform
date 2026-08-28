@@ -65,11 +65,14 @@ export async function POST(request: Request) {
       // Notificaciones
       if (booking) {
         const { notify } = await import('@/lib/notifications')
-        await notify('booking_confirmed', { 
-          booking, 
-          user: booking.profiles, 
-          venue: booking.courts?.venues 
-        })
+        const { waitUntil } = await import('@vercel/functions')
+        waitUntil(
+          notify('booking_confirmed', { 
+            booking, 
+            user: booking.profiles, 
+            venue: booking.courts?.venues 
+          }).catch(console.error)
+        )
       }
       
       console.log(`✅ [Webhook MP] Reserva ${bookingId} confirmada.`)

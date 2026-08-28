@@ -56,9 +56,10 @@ export async function sendMessage(conversationId: string, content: string, image
       
     const owner = ownerData as any
       
-    if (owner && owner.email && resend) {
-      try {
-        await resend.emails.send({
+    if (owner && owner.email && process.env.RESEND_API_KEY) {
+      const { waitUntil } = await import('@vercel/functions')
+      waitUntil(
+        resend!.emails.send({
           from: 'ReservaYa <mensajes@reservaya.com>',
           to: owner.email,
           subject: `¡Nueva consulta en ${conversation.venues.name}!`,
@@ -66,10 +67,8 @@ export async function sendMessage(conversationId: string, content: string, image
                  <p><strong>Mensaje:</strong> "${content}"</p>
                  <br/>
                  <p>Responde rápido para asegurar tu reserva desde el panel de ReservaYa.</p>`
-        })
-      } catch (e) {
-        console.error("Error sending email", e)
-      }
+        }).catch(e => console.error("Error sending email", e))
+      )
     }
   }
   

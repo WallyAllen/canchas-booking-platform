@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { notFound } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
+import { createPublicClient } from "@/lib/supabase/public"
+import { unstable_cache } from "next/cache"
 import { VenueGallery } from "@/components/venue/VenueGallery"
 import { CourtList, CourtItem } from "@/components/venue/CourtList"
 import { AvailabilityGrid } from "@/components/venue/AvailabilityGrid"
@@ -8,89 +9,143 @@ import { PricingTable, PricingRule } from "@/components/venue/PricingTable"
 import { ReviewSection, ReviewItem } from "@/components/venue/ReviewSection"
 import { VenueMap } from "@/components/map/VenueMap"
 import { PlayerChatModal } from "@/components/chat/PlayerChatModal"
-import { MapPin, Phone, CheckCircle2 } from "lucide-react"
+import { MapPin, Phone, CheckCircle2, Loader2 } from "lucide-react"
+import { Suspense } from "react"
+import type { Metadata, ResolvingMetadata } from "next"
 
-export const dynamic = 'force-dynamic'
+// Data fetching function wrapped in unstable_cache for high-performance ISR
+const getVenueData = unstable_cache(
+  async (id: string) => {
+    const supabase = createPublicClient()
+    
+    // 1. Fetch Venue data
+    const { data: venue, error: venueError } = await (supabase.from("venues") as any)
+      .select("*")
+      .eq("id", id)
+      .eq("is_active", true)
+      .single()
 
-export async function generateMetadata({ params }: { params: { id: string } }) {
-  const supabase = await createClient()
-  const { data: venue } = await (supabase.from("venues") as any)
-    .select("name, description")
-    .eq("id", params.id)
-    .single()
+    if (venueError || !venue) return null
 
-  if (!venue) return { title: "Cancha no encontrada | El Potrero" }
+    // 2. Fetch Courts
+    const { data: courtsData } = await supabase
+      .from("courts")
+      .select("*")
+      .eq("venue_id", venue.id)
+      .eq("is_active", true)
+
+    const courts: CourtItem[] = courtsData || []
+
+    // 3. Fetch Pricing Rules
+    let pricingRules: PricingRule[] = []
+    if (courts.length > 0) {
+      const { data: rulesData } = await supabase
+        .from("pricing_rules")
+        .select("*, courts(name)")
+        .in("court_id", courts.map(c => c.id))
+
+      pricingRules = (rulesData || []).map((rule: any) => ({
+        id: rule.id,
+        court_name: rule.courts.name,
+        day_of_week: rule.day_of_week,
+        start_time: rule.start_time,
+        end_time: rule.end_time,
+        price: rule.price,
+        promo_price: rule.promo_price,
+        is_promo_active: rule.is_promo_active
+      }))
+    }
+
+    // 4. Fetch Reviews
+    const { data: reviewsData } = await supabase
+      .from("reviews")
+      .select(`
+        id, rating, comment, venue_response, created_at,
+        profiles (full_name, avatar_url)
+      `)
+      .eq("venue_id", venue.id)
+      .order("created_at", { ascending: false })
+
+    const reviews: ReviewItem[] = (reviewsData || []) as any
+
+    return { venue, courts, pricingRules, reviews }
+  },
+  ['venue-profile'], // Cache tags/keys
+  { revalidate: 3600, tags: ['venues'] } // 1 hour cache
+)
+
+export async function generateMetadata(
+  { params }: { params: { id: string } },
+  parent: ResolvingMetadata
+): Promise<Metadata> {
+  const data = await getVenueData(params.id)
+  
+  if (!data?.venue) return { title: "Cancha no encontrada | ReservaYa" }
+  
+  const venue = data.venue
+  const title = `${venue.name} | ReservaYa`
+  const description = venue.description || `Reservá tu cancha en ${venue.name} de forma fácil y rápida.`
+  const ogImage = venue.photos?.[0] || 'https://reservaya.com/default-og.png'
 
   return {
-    title: `${venue.name} | El Potrero`,
-    description: venue.description || `Reservá tu cancha en ${venue.name} de forma fácil y rápida con El Potrero.`,
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      images: [ogImage],
+      type: "website",
+      locale: "es_AR",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [ogImage],
+    }
   }
 }
 
 export default async function VenuePage({ params }: { params: { id: string } }) {
-  const supabase = await createClient()
+  const data = await getVenueData(params.id)
+  
+  if (!data) notFound()
+    
+  const { venue, courts, pricingRules, reviews } = data
 
-  // 1. Fetch Venue data
-  const { data: venue, error: venueError } = await (supabase.from("venues") as any)
-    .select("*")
-    .eq("id", params.id)
-    .eq("is_active", true)
-    .single()
-
-  if (venueError || !venue) {
-    notFound()
+  // Structured Data (JSON-LD) for Local SEO
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'SportsActivityLocation',
+    name: venue.name,
+    description: venue.description || `Canchas de fútbol en ${venue.city}`,
+    image: venue.photos || [],
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: venue.address,
+      addressLocality: venue.city,
+      addressCountry: 'AR'
+    },
+    geo: (venue.latitude && venue.longitude) ? {
+      '@type': 'GeoCoordinates',
+      latitude: venue.latitude,
+      longitude: venue.longitude
+    } : undefined,
+    telephone: venue.phone,
+    aggregateRating: venue.review_count > 0 ? {
+      '@type': 'AggregateRating',
+      ratingValue: venue.avg_rating,
+      reviewCount: venue.review_count
+    } : undefined
   }
-
-  // 2. Fetch Courts
-  const { data: courtsData } = await supabase
-    .from("courts")
-    .select("*")
-    .eq("venue_id", venue.id)
-    .eq("is_active", true)
-
-  const courts: CourtItem[] = courtsData || []
-
-  // 3. Fetch Pricing Rules for these courts
-  let pricingRules: PricingRule[] = []
-  if (courts.length > 0) {
-    const { data: rulesData } = await supabase
-      .from("pricing_rules")
-      .select("*, courts(name)")
-      .in("court_id", courts.map(c => c.id))
-
-    pricingRules = (rulesData || []).map((rule: any) => ({
-      id: rule.id,
-      court_name: rule.courts.name,
-      day_of_week: rule.day_of_week,
-      start_time: rule.start_time,
-      end_time: rule.end_time,
-      price: rule.price,
-      promo_price: rule.promo_price,
-      is_promo_active: rule.is_promo_active
-    }))
-  }
-
-  // 4. Fetch Reviews
-  const { data: reviewsData } = await supabase
-    .from("reviews")
-    .select(`
-      id,
-      rating,
-      comment,
-      venue_response,
-      created_at,
-      profiles (
-        full_name,
-        avatar_url
-      )
-    `)
-    .eq("venue_id", venue.id)
-    .order("created_at", { ascending: false })
-
-  const reviews: ReviewItem[] = (reviewsData || []) as any
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl space-y-12">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      
       {/* Galería Header */}
       <div>
         <div className="mb-6">
@@ -145,7 +200,14 @@ export default async function VenuePage({ params }: { params: { id: string } }) 
 
           {/* Availability Grid */}
           <section>
-            <AvailabilityGrid venueId={venue.id} courts={courts} />
+            <Suspense fallback={
+              <div className="flex items-center justify-center p-12 text-muted-foreground bg-muted/20 border border-dashed rounded-xl">
+                <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                Cargando disponibilidad...
+              </div>
+            }>
+              <AvailabilityGrid venueId={venue.id} courts={courts} />
+            </Suspense>
           </section>
 
           {/* Pricing Table */}
