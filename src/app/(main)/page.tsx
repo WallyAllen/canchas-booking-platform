@@ -121,6 +121,9 @@ export default async function HomePage() {
         <div className="hidden lg:block z-0">
           <Hero3D />
         </div>
+
+        {/* Emerald Glow focalizado detrás del buscador */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] md:w-[600px] h-[400px] md:h-[600px] bg-primary/20 rounded-full blur-[100px] md:blur-[140px] pointer-events-none z-10" />
         
         <div className="relative z-20 container mx-auto px-4 py-24 md:py-32 lg:py-40 flex flex-col items-center text-center">
           <div className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-sm font-medium text-primary mb-6 backdrop-blur-xs">
