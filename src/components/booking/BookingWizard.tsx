@@ -2,7 +2,7 @@
 /* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -27,6 +27,20 @@ interface BookingWizardProps {
 
 export function BookingWizard({ booking }: BookingWizardProps) {
   const router = useRouter()
+
+  // Limpiar reserva si el usuario cierra la pestaña o navega hacia atrás en el navegador
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // Intentar limpiar de forma sincrónica con beacon
+      navigator.sendBeacon(`/api/bookings/cancel`, JSON.stringify({ bookingId: booking.id }))
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
+  }, [booking.id])
+
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<'mercadopago' | 'transfer'>('mercadopago')
@@ -138,7 +152,21 @@ export function BookingWizard({ booking }: BookingWizardProps) {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <Button variant="outline" className="w-full" onClick={() => router.back()} disabled={loading}>
+              <Button 
+                variant="outline" 
+                className="w-full" 
+                onClick={async () => {
+                  setLoading(true)
+                  try {
+                    const { cancelPendingBooking } = await import('@/app/actions/booking')
+                    await cancelPendingBooking(booking.id)
+                  } catch (e) {
+                    console.error(e)
+                  }
+                  router.back()
+                }} 
+                disabled={loading}
+              >
                 Cancelar
               </Button>
               {requireDeposit ? (
