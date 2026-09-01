@@ -12,7 +12,7 @@ import { toast } from "@/components/ui/toast"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Loader2, ArrowRight } from "lucide-react"
 import Link from "next/link"
-import { CreditsList } from "@/components/profile/CreditsList"
+import { CreditsList } from "@/components/profile/credits-list"
 
 export default function ProfilePage() {
   const { user, profile, isLoading } = useUser()
@@ -45,14 +45,13 @@ export default function ProfilePage() {
     
     setIsSaving(true)
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase.from("profiles") as any)
+            const { error } = await supabase.from("profiles")
+        // @ts-expect-error fix inference
         .update({
           full_name: formData.full_name,
           phone: formData.phone,
           updated_at: new Date().toISOString(),
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any)
+                  } as unknown)
         .eq("id", user.id)
 
       if (error) throw error

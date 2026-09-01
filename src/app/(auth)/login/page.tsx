@@ -6,8 +6,8 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { useUser } from "@/hooks/useUser"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { toast } from "@/components/ui/toast"
-import { Loader2 } from "lucide-react"
+import { Loader2, AlertCircle } from "lucide-react"
+
 
 import { Suspense } from "react"
 // ... (rest of imports)
@@ -17,6 +17,7 @@ function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const [isFacebookLoading, setIsFacebookLoading] = useState(false)
   const nextUrl = searchParams.get("next") || "/"
@@ -24,11 +25,7 @@ function LoginForm() {
 
   useEffect(() => {
     if (errorParam) {
-      toast.add({
-        type: "error",
-        title: "Error de autenticación",
-        description: "No se pudo iniciar sesión. Por favor, intentá nuevamente.",
-      })
+      setErrorMsg("No se pudo iniciar sesión. Por favor, intentá nuevamente.")
     }
   }, [errorParam])
 
@@ -43,11 +40,7 @@ function LoginForm() {
     try {
       await signInWithGoogle(nextUrl)
     } catch {
-      toast.add({
-        type: "error",
-        title: "Error",
-        description: "Ocurrió un error al intentar iniciar sesión con Google.",
-      })
+      setErrorMsg("Ocurrió un error al intentar iniciar sesión con Google.")
       setIsGoogleLoading(false)
     }
   }
@@ -57,11 +50,7 @@ function LoginForm() {
     try {
       await signInWithFacebook(nextUrl)
     } catch {
-      toast.add({
-        type: "error",
-        title: "Error",
-        description: "Ocurrió un error al intentar iniciar sesión con Facebook.",
-      })
+      setErrorMsg("Ocurrió un error al intentar iniciar sesión con Facebook.")
       setIsFacebookLoading(false)
     }
   }
@@ -85,13 +74,22 @@ function LoginForm() {
             <span className="text-4xl">⚽</span>
           </div>
           <div>
-            <CardTitle className="text-3xl font-bold tracking-tight">El Potrero</CardTitle>
+            <CardTitle className="text-3xl font-bold tracking-tight">ReservaYa</CardTitle>
             <CardDescription className="mt-2 text-base">
               Iniciá sesión para reservar tu cancha
             </CardDescription>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
+          {errorMsg && (
+            <div className="flex flex-col gap-1 p-3 bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 rounded-md" aria-live="polite">
+              <div className="flex items-center gap-2 font-medium">
+                <AlertCircle className="h-4 w-4" />
+                Error
+              </div>
+              <div className="text-sm opacity-90">{errorMsg}</div>
+            </div>
+          )}
           <Button 
             variant="outline" 
             className="w-full h-12 text-base font-normal flex items-center justify-center gap-3" 
