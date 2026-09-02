@@ -4,7 +4,7 @@ import { createBrowserClient } from "@supabase/ssr"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
-import { LocationPicker } from "@/components/dashboard/venue/LocationPicker"
+import { LocationPicker } from "@/components/dashboard/venue/location-picker"
 
 export default function NewVenuePage() {
   const router = useRouter()

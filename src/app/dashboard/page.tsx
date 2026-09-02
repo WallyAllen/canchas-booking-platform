@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
-import { MetricCard } from "@/components/dashboard/MetricCard"
+import { MetricCard } from "@/components/dashboard/metric-card"
 import { Calendar as CalendarIcon, CheckCircle, Clock, TrendingUp, AlertCircle } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"

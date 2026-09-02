@@ -8,8 +8,8 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Calendar, Clock, MapPin, Search } from "lucide-react"
 import Link from "next/link"
-import { CancelDialog } from "@/components/booking/CancelDialog"
-import { RescheduleDialog } from "@/components/booking/RescheduleDialog"
+import { CancelDialog } from "@/components/booking/cancel-dialog"
+import { RescheduleDialog } from "@/components/booking/reschedule-dialog"
 
 export const dynamic = 'force-dynamic'
 

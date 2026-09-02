@@ -5,9 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { MapPin } from "lucide-react"
-import { CourtFormModal } from "@/components/dashboard/courts/CourtFormModal"
-import { PricingModal } from "@/components/dashboard/courts/PricingModal"
-import { OffersModal } from "@/components/dashboard/courts/OffersModal"
+import { CourtFormModal } from "@/components/dashboard/courts/court-form-modal"
+import { PricingModal } from "@/components/dashboard/courts/pricing-modal"
+import { OffersModal } from "@/components/dashboard/courts/offers-modal"
 
 export const dynamic = 'force-dynamic'
 

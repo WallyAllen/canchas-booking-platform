@@ -79,12 +79,13 @@ export async function createCredit(userId: string, bookingId: string, venueId: s
 export async function getAvailableCredits(userId: string, venueId: string) {
   const supabase = await createClient()
   const now = new Date().toISOString()
-  
+
   const { data, error } = await (supabase.from('credits') as any)
     .select('*')
     .eq('user_id', userId)
     .eq('venue_id', venueId)
     .eq('status', 'available')
+    .is('locked_for_booking_id', null)
     .gt('expires_at', now)
 
   if (error) {
@@ -96,16 +97,21 @@ export async function getAvailableCredits(userId: string, venueId: string) {
   return credits.reduce((acc: number, curr: any) => acc + curr.amount, 0)
 }
 
+// Bloquea créditos disponibles contra una reserva pendiente (SEC-04: antes se
+// marcaban 'used' de forma inmediata sin usar locked_for_booking_id de la
+// migración 019, lo que permitía doble gasto entre dos reservas concurrentes).
+// Cada UPDATE es condicional a que el crédito siga sin bloquear — si dos
+// requests compiten por el mismo crédito, solo una lo gana.
 export async function applyCredits(userId: string, bookingId: string, venueId: string, amountToApply: number) {
   const supabase = await createClient()
   const now = new Date().toISOString()
-  
-  // Obtenemos créditos disponibles
+
   const { data: credits, error } = await (supabase.from('credits') as any)
     .select('*')
     .eq('user_id', userId)
     .eq('venue_id', venueId)
     .eq('status', 'available')
+    .is('locked_for_booking_id', null)
     .gt('expires_at', now)
     .order('expires_at', { ascending: true }) // Consumimos los que expiran primero
 
@@ -114,18 +120,39 @@ export async function applyCredits(userId: string, bookingId: string, venueId: s
   }
 
   let remainingToApply = amountToApply
-  
+
   for (const credit of credits) {
     if (remainingToApply <= 0) break;
 
-    // MVP: Consumimos el crédito completo. 
+    // MVP: Consumimos el crédito completo.
     // (Si un crédito es de $5000 y solo necesitás $3000, en este MVP se consume entero para simplificar)
-    await (supabase.from('credits') as any)
-      .update({ status: 'used', used_at: now })
+    const { data: locked } = await (supabase.from('credits') as any)
+      .update({ locked_for_booking_id: bookingId })
       .eq('id', credit.id)
-      
+      .eq('status', 'available')
+      .is('locked_for_booking_id', null)
+      .select('id, amount')
+
+    if (!locked || locked.length === 0) continue // otro request se lo llevó primero
+
     remainingToApply -= credit.amount
   }
-  
+
   return remainingToApply > 0 ? remainingToApply : 0
+}
+
+// Finaliza el bloqueo como gasto real una vez confirmado el pago (llamado
+// desde el webhook de Mercado Pago tras marcar la reserva 'paid').
+export async function consumeLockedCredits(bookingId: string) {
+  const supabase = createAdminClient()
+  const now = new Date().toISOString()
+
+  const { error } = await (supabase.from('credits') as any)
+    .update({ status: 'used', used_at: now })
+    .eq('locked_for_booking_id', bookingId)
+
+  if (error) {
+    console.error('Error consuming locked credits:', error)
+    throw new Error('Error al consumir créditos bloqueados')
+  }
 }

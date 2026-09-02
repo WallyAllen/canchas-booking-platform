@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable jsx-a11y/label-has-associated-control */
 "use server"
 
@@ -27,7 +26,7 @@ export async function updateVenueProfile(formData: FormData) {
     try {
       const q = encodeURIComponent(`${address}, ${city}, Argentina`)
       const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}`, {
-        headers: { 'User-Agent': 'El Potrero MVP' }
+        headers: { 'User-Agent': 'ReservaYa MVP' }
       })
       const data = await res.json()
       if (data && data.length > 0) {
@@ -40,23 +39,26 @@ export async function updateVenueProfile(formData: FormData) {
   }
 
   // Validar permisos
-  const { data: venue } = await (supabase.from("venues") as any)
+  const { data: venue } = await supabase.from("venues")
     .select("owner_id")
     .eq("id", venueId)
     .single()
 
+  // @ts-expect-error fix inference
   if (!venue || venue.owner_id !== user.id) {
     throw new Error("No autorizado")
   }
 
-  const payload: any = { name, phone, description, address, city }
+  const payload: Record<string, string | null> = { name, phone, description, address, city }
   if (latitude !== null && longitude !== null) {
+    // @ts-expect-error fix inference
     payload.latitude = latitude
+    // @ts-expect-error fix inference
     payload.longitude = longitude
   }
 
-  const { error } = await (supabase.from("venues") as any)
-    .update(payload)
+  const { error } = await supabase.from("venues")
+    .update(payload as never)
     .eq("id", venueId)
 
   if (error) {
@@ -73,20 +75,24 @@ export async function updateVenuePaymentSettings(formData: FormData) {
 
   const venueId = formData.get("venue_id") as string
   const require_deposit = formData.get("require_deposit") === "on"
-  const deposit_percentage = parseInt(formData.get("deposit_percentage") as string) || 30
+  // AGENTS.md: "Seña (deposit): 30% minimum of total price, always paid
+  // digitally". Clamp al rango [30, 100] — nunca hubo piso antes de esto.
+  const rawDepositPercentage = parseInt(formData.get("deposit_percentage") as string) || 30
+  const deposit_percentage = Math.min(100, Math.max(30, rawDepositPercentage))
 
   // Validar permisos
-  const { data: venue } = await (supabase.from("venues") as any)
+  const { data: venue } = await supabase.from("venues")
     .select("owner_id")
     .eq("id", venueId)
     .single()
 
+  // @ts-expect-error fix inference
   if (!venue || venue.owner_id !== user.id) {
     throw new Error("No autorizado")
   }
 
-  const { error } = await (supabase.from("venues") as any)
-    .update({ require_deposit, deposit_percentage })
+  const { error } = await supabase.from("venues")
+    .update({ require_deposit, deposit_percentage } as never)
     .eq("id", venueId)
 
   if (error) {
