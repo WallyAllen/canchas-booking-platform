@@ -7,11 +7,15 @@ import { VenueCard } from "@/components/venue/venue-card"
 import { HowItWorks } from "@/components/home/how-it-works"
 import { Button } from "@/components/ui/button"
 import { StaggerGrid } from "@/components/ui/stagger-grid"
-import dynamic from "next/dynamic"
+import nextDynamic from "next/dynamic"
 
-const Hero3D = dynamic(() => import("@/components/home/hero-3d"), { ssr: false })
+const Hero3D = nextDynamic(() => import("@/components/home/hero-3d"), { ssr: false })
 
-export const revalidate = 3600 // revalidate at most every hour
+// Vercel Preview builds no exponen NEXT_PUBLIC_SUPABASE_URL en build time
+// (solo Production), lo que rompe el prerender ISR. force-dynamic evita
+// tocar Supabase durante el build; se puede volver a `revalidate = 3600`
+// si se habilitan esas env vars para el entorno Preview.
+export const dynamic = 'force-dynamic'
 
 type PromoQueryType = {
   id: string;
