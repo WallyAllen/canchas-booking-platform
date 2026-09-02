@@ -3,8 +3,8 @@ import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { Card,} from "@/components/ui/card"
 
-import { ScheduleNavigation } from "@/components/dashboard/schedule/ScheduleNavigation"
-import { ManualBookingModal } from "@/components/dashboard/schedule/ManualBookingModal"
+import { ScheduleNavigation } from "@/components/dashboard/schedule/schedule-navigation"
+import { ManualBookingModal } from "@/components/dashboard/schedule/manual-booking-modal"
 
 export const dynamic = 'force-dynamic'
 

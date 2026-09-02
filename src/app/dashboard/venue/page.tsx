@@ -3,8 +3,8 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { VenuePhotosForm } from "@/components/dashboard/venue/VenuePhotosForm"
-import { VenueProfileForm, VenueLocationForm, VenuePaymentSettingsForm } from "@/components/dashboard/venue/VenueForms"
+import { VenuePhotosForm } from "@/components/dashboard/venue/venue-photos-form"
+import { VenueProfileForm, VenueLocationForm, VenuePaymentSettingsForm } from "@/components/dashboard/venue/venue-forms"
 
 export const dynamic = 'force-dynamic'
 

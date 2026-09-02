@@ -1,5 +1,5 @@
 import { Header } from "@/components/layout/Header"
-import { ConditionalFooter } from "@/components/layout/ConditionalFooter"
+import { ConditionalFooter } from "@/components/layout/conditional-footer"
 
 export default function MainLayout({
   children,
