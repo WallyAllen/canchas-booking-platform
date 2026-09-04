@@ -1,7 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from 'next/server'
 import { verifyWebhookSignature } from '@/lib/mercadopago/helpers'
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
+import { consumeLockedCredits } from '@/lib/credits/manager'
 import { Payment } from 'mercadopago'
 import { MercadoPagoConfig } from 'mercadopago'
 
@@ -16,12 +16,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ received: true }, { status: 200 })
     }
 
-    // Seguridad: verificar firma (Opcional en dev, recomendado en prod)
+    // Seguridad: verificar firma. En producción, sin secreto configurado no
+    // se puede verificar nada, así que se falla cerrado en vez de aceptar
+    // el webhook sin validar (era el comportamiento anterior).
     const xSignature = request.headers.get('x-signature')
     const xRequestId = request.headers.get('x-request-id')
     const secret = process.env.MP_WEBHOOK_SECRET
 
-    if (secret && xSignature && xRequestId) {
+    if (!xSignature || !xRequestId) {
+      return NextResponse.json({ error: 'Missing security headers' }, { status: 403 })
+    }
+    if (!secret) {
+      if (process.env.NODE_ENV === 'production') {
+        console.error('MP_WEBHOOK_SECRET no está configurada en producción — rechazando webhook.')
+        return NextResponse.json({ error: 'Webhook signature verification not configured' }, { status: 500 })
+      }
+      console.warn('MP_WEBHOOK_SECRET no configurada: firma sin verificar (solo tolerado fuera de producción).')
+    } else {
       const isValid = verifyWebhookSignature(xSignature, xRequestId, id, secret)
       if (!isValid) {
         return NextResponse.json({ error: 'Firma inválida' }, { status: 403 })
@@ -45,13 +56,17 @@ export async function POST(request: Request) {
       }
 
       // Actualizar en DB usando el client del servidor
-      const supabase = await createClient()
+      const supabase = createAdminClient()
       
-      const { data: booking, error } = await (supabase.from('bookings') as any)
-        .update({ 
+      const { data: currentBooking } = await supabase.from('bookings').select('payment_status').eq('id', bookingId).single()
+      if (currentBooking && currentBooking.payment_status === 'paid') {
+         return NextResponse.json({ success: true, message: 'Already paid' }, { status: 200 })
+      }
+
+      const { data: booking, error } = await supabase.from('bookings')
+        .update({
           payment_status: 'paid',
-          status: 'confirmed',
-          updated_at: new Date().toISOString()
+          status: 'confirmed'
         })
         .eq('id', bookingId)
         .select('*, profiles(*), courts(*, venues(*))')
@@ -64,6 +79,9 @@ export async function POST(request: Request) {
       
       // Notificaciones
       if (booking) {
+        // Consumir créditos bloqueados
+        await consumeLockedCredits(bookingId).catch(console.error)
+        
         const { notify } = await import('@/lib/notifications')
         const { waitUntil } = await import('@vercel/functions')
         waitUntil(
@@ -79,8 +97,8 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ success: true }, { status: 200 })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Webhook processing error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: 'Internal error processing webhook' }, { status: 500 })
   }
 }

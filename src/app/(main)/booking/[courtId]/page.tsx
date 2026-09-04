@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { BookingWizard } from "@/components/booking/BookingWizard"
+import { BookingWizard } from "@/components/booking/booking-wizard"
 
 export const dynamic = 'force-dynamic'
 

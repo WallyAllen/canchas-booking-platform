@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
-import { BookingsClient } from "@/components/dashboard/bookings/BookingsClient"
+import { BookingsClient } from "@/components/dashboard/bookings/bookings-client"
 
 export const dynamic = 'force-dynamic'
 

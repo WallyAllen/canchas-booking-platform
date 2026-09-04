@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
-import { InboxClient } from "@/components/dashboard/inbox/InboxClient"
+import { InboxClient } from "@/components/dashboard/inbox/inbox-client"
 
 export const dynamic = 'force-dynamic'
 
