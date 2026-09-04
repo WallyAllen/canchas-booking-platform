@@ -6,9 +6,29 @@ export async function middleware(request: NextRequest) {
     request,
   })
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    // El middleware corre en cada request del matcher de abajo. Si estas
+    // env vars faltan (p.ej. un deploy de Preview en Vercel sin las vars
+    // habilitadas para ese entorno), no podemos saber quién es el usuario —
+    // pero eso no debería tumbar el sitio entero con un 500 en cada página.
+    // Fail closed solo en las rutas que requieren auth; el resto sigue andando.
+    console.error('Middleware: faltan NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_ANON_KEY')
+    const { pathname } = request.nextUrl
+    if (pathname.startsWith('/dashboard') || pathname.startsWith('/admin')) {
+      const loginUrl = request.nextUrl.clone()
+      loginUrl.pathname = '/login'
+      loginUrl.searchParams.set('redirect_to', pathname)
+      return NextResponse.redirect(loginUrl)
+    }
+    return supabaseResponse
+  }
+
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseAnonKey,
     {
       cookies: {
         getAll() {
