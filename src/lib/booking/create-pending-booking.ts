@@ -70,7 +70,6 @@ export async function createPendingBooking(params: {
     price = rule.is_promo_active && rule.promo_price ? rule.promo_price : rule.price
   }
 
-  // @ts-expect-error fix inference
   const venueId = court.venue_id as string
   // @ts-expect-error fix inference
   const requireDeposit = (court.venues?.require_deposit ?? true) as boolean

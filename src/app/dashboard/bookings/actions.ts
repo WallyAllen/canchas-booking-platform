@@ -15,7 +15,6 @@ async function assertOwnsBooking(
     .eq("id", bookingId)
     .single()
 
-  // @ts-expect-error fix inference
   const ownerId = booking?.courts?.venues?.owner_id
   if (!booking || ownerId !== userId) {
     throw new Error("No autorizado")

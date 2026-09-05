@@ -44,7 +44,6 @@ export async function updateVenueProfile(formData: FormData) {
     .eq("id", venueId)
     .single()
 
-  // @ts-expect-error fix inference
   if (!venue || venue.owner_id !== user.id) {
     throw new Error("No autorizado")
   }
@@ -86,7 +85,6 @@ export async function updateVenuePaymentSettings(formData: FormData) {
     .eq("id", venueId)
     .single()
 
-  // @ts-expect-error fix inference
   if (!venue || venue.owner_id !== user.id) {
     throw new Error("No autorizado")
   }
@@ -131,7 +129,6 @@ export async function updateVenueTransferDetails(formData: FormData) {
     .eq("id", venueId)
     .single()
 
-  // @ts-expect-error fix inference
   if (!venue || venue.owner_id !== user.id) {
     throw new Error("No autorizado")
   }

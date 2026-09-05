@@ -38,7 +38,6 @@ export function AvailabilityGrid({ venueId, courts }: AvailabilityGridProps) {
       setLoading(true)
       try {
         const { data, error } = await supabase
-          // @ts-expect-error rpc not in types yet
           .rpc("get_venue_availability", { 
             p_venue_id: venueId, 
             p_date: dateStr 

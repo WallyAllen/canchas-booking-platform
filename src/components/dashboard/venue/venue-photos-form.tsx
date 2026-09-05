@@ -94,7 +94,6 @@ export function VenuePhotosForm({ venueId, initialPhotos }: VenuePhotosFormProps
     try {
       /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
       const { error } = await supabase.from("venues")
-        // @ts-expect-error fix inference
         .update({ photos })
         .eq("id", venueId)
 

@@ -24,7 +24,11 @@ export interface Booking {
   status: string
   payment_status: string
   courts?: { name: string }
-  profiles?: { full_name: string; email: string; phone: string }
+  // `full_name` y `phone` son nullables en `profiles` (001_initial_schema.sql):
+  // un usuario que entró por OAuth sin completar el perfil los tiene en null.
+  // El render ya contempla ese caso ("Sin Nombre" / "Sin teléfono"); lo que
+  // estaba mal era el tipo, que prometía un string siempre.
+  profiles?: { full_name: string | null; email: string; phone: string | null }
 }
 
 export interface Court {
@@ -239,7 +243,7 @@ export function BookingsClient({ initialBookings, courts }: BookingsClientProps)
                               "bg-blue-50 border-blue-200"
                             )}>
                               <div className="flex justify-between items-start">
-                                <span className="font-semibold truncate max-w-[120px]" title={booking.profiles?.full_name}>
+                                <span className="font-semibold truncate max-w-[120px]" title={booking.profiles?.full_name || 'Sin Nombre'}>
                                   {booking.profiles?.full_name || 'Sin Nombre'}
                                 </span>
                                 <Badge variant="outline" className="text-[10px] px-1 h-4 bg-background/50 backdrop-blur-sm">

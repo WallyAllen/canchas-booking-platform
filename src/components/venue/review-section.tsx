@@ -103,7 +103,6 @@ export function ReviewSection({ venueId, avgRating, reviewCount, reviews }: Revi
     try {
       const supabase = createClient()
       const { error } = await supabase.from('reviews').insert({
-        // @ts-expect-error fix inference
         venue_id: venueId,
         user_id: user.id,
         booking_id: eligibleBookingId,
