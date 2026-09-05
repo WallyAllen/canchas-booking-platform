@@ -2,12 +2,14 @@ import { useEffect, useRef } from "react"
 import { format } from "date-fns"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { ChatImage } from "@/components/chat/chat-image"
 
 interface Message {
   id: string
   content: string
   created_at: string
   sender_type: 'user' | 'venue' | 'system'
+  image_url?: string | null
   profiles?: {
     full_name: string
     avatar_url?: string
@@ -69,6 +71,7 @@ export function AdminMessageList({ messages }: AdminMessageListProps) {
                       : 'bg-muted rounded-bl-sm'
                   }`}
                 >
+                  {msg.image_url && <ChatImage source={msg.image_url} />}
                   <p className="whitespace-pre-wrap">{msg.content}</p>
                 </div>
                 <span className="text-[10px] text-muted-foreground mt-1 px-1">

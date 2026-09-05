@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
+import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -10,6 +11,7 @@ import { startConversation, sendMessage, markConversationAsRead } from "@/app/ac
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { ChatImage } from "@/components/chat/chat-image"
 
 interface PlayerChatModalProps {
   venueId: string
@@ -33,6 +35,7 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
   const [isLoading, setIsLoading] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const supabase = createClient()
+  const searchParams = useSearchParams()
 
   // Get user on mount
   useEffect(() => {
@@ -40,6 +43,22 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
       if (data.user) setUserId(data.user.id)
     })
   }, [supabase.auth])
+
+  // El flujo de transferencia manda al usuario acá con ?chat=1&booking=<id>
+  // para que adjunte el comprobante. Abrimos el chat solo y dejamos el mensaje
+  // escrito, pero sin enviarlo: que decida él cuándo mandarlo.
+  const didPrefill = useRef(false)
+  useEffect(() => {
+    if (didPrefill.current) return
+    if (searchParams.get('chat') !== '1') return
+
+    didPrefill.current = true
+    setIsOpen(true)
+
+    if (searchParams.get('booking')) {
+      setInputValue('Hola, transferí la seña de mi reserva. Adjunto el comprobante.')
+    }
+  }, [searchParams])
 
   // Handle open
   const handleOpenChange = (open: boolean) => {
@@ -185,14 +204,12 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
       const { error } = await supabase.storage
         .from('chat-images')
         .upload(fileName, file)
-        
+
       if (error) throw error
-      
-      const { data: { publicUrl } } = supabase.storage
-        .from('chat-images')
-        .getPublicUrl(fileName)
-        
-      await sendMessage(conversationId, '🖼️ Imagen adjunta', publicUrl)
+
+      // El bucket es privado (030): guardamos el path, no una URL. La firma se
+      // genera al renderizar, en <ChatImage />.
+      await sendMessage(conversationId, '🖼️ Imagen adjunta', fileName)
     } catch (e: unknown) {
       // @ts-expect-error fix inference
       alert("Error al subir imagen: " + (e.message || "Desconocido"))
@@ -289,10 +306,7 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
                         
                         <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                           <div className={`px-4 py-2 rounded-2xl ${isMe ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-muted rounded-bl-sm'}`}>
-                            {msg.image_url && (
-                              /* eslint-disable-next-line @next/next/no-img-element */
-                              <img src={msg.image_url} alt="Adjunto" className="max-w-[200px] sm:max-w-[250px] rounded-md mb-2 object-cover" />
-                            )}
+                            {msg.image_url && <ChatImage source={msg.image_url} />}
                             <div className="break-words">{msg.content}</div>
                           </div>
                           <div className="flex items-center gap-1 text-[10px] text-muted-foreground mt-1 px-1">

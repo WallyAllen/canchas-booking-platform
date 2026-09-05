@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { VenuePhotosForm } from "@/components/dashboard/venue/venue-photos-form"
-import { VenueProfileForm, VenueLocationForm, VenuePaymentSettingsForm } from "@/components/dashboard/venue/venue-forms"
+import { VenueProfileForm, VenueLocationForm, VenuePaymentSettingsForm, VenueTransferDetailsForm } from "@/components/dashboard/venue/venue-forms"
 
 export const dynamic = 'force-dynamic'
 
@@ -19,6 +19,12 @@ export default async function VenueProfilePage() {
 
   const venue = venues?.[0]
   if (!venue) redirect("/dashboard")
+
+  const { data: transferDetails } = await supabase
+    .from("venue_payment_details")
+    .select("alias, cbu, holder_name, bank_name")
+    .eq("venue_id", venue.id)
+    .maybeSingle()
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -50,6 +56,16 @@ export default async function VenueProfilePage() {
           <CardDescription>Configura cómo los jugadores abonan sus reservas.</CardDescription>
         </CardHeader>
         <VenuePaymentSettingsForm venue={venue} />
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Datos para Transferencia</CardTitle>
+          <CardDescription>
+            Dónde recibís la seña. Mercado Pago estará disponible próximamente.
+          </CardDescription>
+        </CardHeader>
+        <VenueTransferDetailsForm venueId={venue.id} details={transferDetails ?? null} />
       </Card>
     </div>
   )

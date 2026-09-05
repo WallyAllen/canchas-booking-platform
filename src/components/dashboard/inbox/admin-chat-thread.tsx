@@ -161,14 +161,11 @@ export function AdminChatThread({ conversation, venueId, _onBack }: AdminChatThr
       const { error } = await supabase.storage
         .from('chat-images')
         .upload(fileName, file)
-        
+
       if (error) throw error
-      
-      const { data: { publicUrl } } = supabase.storage
-        .from('chat-images')
-        .getPublicUrl(fileName)
-        
-      await sendMessage(conversation.id, '🖼️ Imagen adjunta', publicUrl)
+
+      // Bucket privado (030): se guarda el path; la firma se genera al renderizar.
+      await sendMessage(conversation.id, '🖼️ Imagen adjunta', fileName)
     } catch (err: unknown) {
       // @ts-expect-error fix inference
       alert("Error al subir imagen: " + (err.message || "Desconocido"))

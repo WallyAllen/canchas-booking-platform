@@ -173,6 +173,44 @@ export interface Database {
           is_promo_active?: boolean
         }
       }
+      venue_payment_details: {
+        Row: {
+          venue_id: string
+          alias: string | null
+          cbu: string | null
+          holder_name: string | null
+          bank_name: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          venue_id: string
+          alias?: string | null
+          cbu?: string | null
+          holder_name?: string | null
+          bank_name?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          venue_id?: string
+          alias?: string | null
+          cbu?: string | null
+          holder_name?: string | null
+          bank_name?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venue_payment_details_venue_id_fkey"
+            columns: ["venue_id"]
+            isOneToOne: true
+            referencedRelation: "venues"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       bookings: {
         Row: {
           id: string
@@ -184,12 +222,13 @@ export interface Database {
           total_price: number
           deposit_amount: number
           deposit_method: 'mercadopago' | 'transfer' | 'cash'
-          payment_status: 'pending' | 'paid' | 'refunded' | 'credited'
+          payment_status: 'pending' | 'awaiting_verification' | 'paid' | 'refunded' | 'credited'
           status: 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no_show'
           source: 'platform' | 'manual'
           mp_payment_id: string | null
           created_at: string
           cancelled_at: string | null
+          transfer_reported_at: string | null
         }
         Insert: {
           id?: string
@@ -201,7 +240,7 @@ export interface Database {
           total_price: number
           deposit_amount: number
           deposit_method?: 'mercadopago' | 'transfer' | 'cash'
-          payment_status?: 'pending' | 'paid' | 'refunded' | 'credited'
+          payment_status?: 'pending' | 'awaiting_verification' | 'paid' | 'refunded' | 'credited'
           status?: 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no_show'
           source?: 'platform' | 'manual'
           mp_payment_id?: string | null
@@ -218,7 +257,7 @@ export interface Database {
           total_price?: number
           deposit_amount?: number
           deposit_method?: 'mercadopago' | 'transfer' | 'cash'
-          payment_status?: 'pending' | 'paid' | 'refunded' | 'credited'
+          payment_status?: 'pending' | 'awaiting_verification' | 'paid' | 'refunded' | 'credited'
           status?: 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no_show'
           source?: 'platform' | 'manual'
           mp_payment_id?: string | null

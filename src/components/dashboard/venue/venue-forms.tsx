@@ -4,7 +4,7 @@ import { toast } from '@/components/ui/use-toast'
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { updateVenueProfile, updateVenuePaymentSettings } from "@/app/dashboard/venue/actions"
+import { updateVenueProfile, updateVenuePaymentSettings, updateVenueTransferDetails } from "@/app/dashboard/venue/actions"
 import { CardContent } from "@/components/ui/card"
 
 import { LocationPicker } from "./location-picker"
@@ -165,10 +165,10 @@ export function VenuePaymentSettingsForm({ venue }: { venue: import("@/types/dom
           <div className="space-y-2 max-w-[200px]">
             <label className="text-sm font-medium leading-none">Porcentaje de Seña (%)</label>
             <div className="flex items-center gap-2">
-              <input 
-                name="deposit_percentage" 
-                type="number" 
-                min="0" 
+              <input
+                name="deposit_percentage"
+                type="number"
+                min="30"
                 max="100"
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary" 
                 defaultValue={venue.deposit_percentage ?? 30} 
@@ -182,6 +182,122 @@ export function VenuePaymentSettingsForm({ venue }: { venue: import("@/types/dom
         <div className="pt-2">
           <Button type="submit" disabled={loading}>
             {loading ? "Guardando..." : "Guardar Configuración"}
+          </Button>
+        </div>
+      </CardContent>
+    </form>
+  )
+}
+
+export interface TransferDetails {
+  alias: string | null
+  cbu: string | null
+  holder_name: string | null
+  bank_name: string | null
+}
+
+/**
+ * Datos donde los jugadores transfieren la seña.
+ *
+ * Se guardan en `venue_payment_details`, no en `venues`, porque `venues` se
+ * lee públicamente: el CBU no puede terminar en la ficha del complejo.
+ */
+export function VenueTransferDetailsForm({
+  venueId,
+  details,
+}: {
+  venueId: string
+  details: TransferDetails | null
+}) {
+  const [loading, setLoading] = useState(false)
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setLoading(true)
+    try {
+      await updateVenueTransferDetails(new FormData(e.currentTarget))
+      toast({ title: "Datos de transferencia actualizados" })
+    } catch (error: unknown) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Error desconocido",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <CardContent className="space-y-6">
+        <input type="hidden" name="venue_id" value={venueId} />
+
+        <div className="rounded-lg border border-amber-500/40 bg-amber-500/5 p-4">
+          <p className="text-sm">
+            Estos datos se le muestran <strong>solo</strong> a jugadores que ya reservaron
+            un turno en tu complejo y tienen la seña pendiente. No aparecen en tu ficha pública.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label htmlFor="alias" className="text-sm font-medium leading-none">Alias</label>
+            <input
+              id="alias"
+              name="alias"
+              type="text"
+              placeholder="micomplejo.futbol"
+              defaultValue={details?.alias ?? ""}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="cbu" className="text-sm font-medium leading-none">CBU</label>
+            <input
+              id="cbu"
+              name="cbu"
+              type="text"
+              inputMode="numeric"
+              placeholder="22 dígitos"
+              defaultValue={details?.cbu ?? ""}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm font-mono focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="holder_name" className="text-sm font-medium leading-none">Titular de la cuenta</label>
+            <input
+              id="holder_name"
+              name="holder_name"
+              type="text"
+              placeholder="Nombre y apellido o razón social"
+              defaultValue={details?.holder_name ?? ""}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="bank_name" className="text-sm font-medium leading-none">Banco</label>
+            <input
+              id="bank_name"
+              name="bank_name"
+              type="text"
+              placeholder="Ej: Banco Provincia"
+              defaultValue={details?.bank_name ?? ""}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            />
+          </div>
+        </div>
+
+        <p className="text-xs text-muted-foreground">
+          Cargá al menos un alias o un CBU. Sin esto, los jugadores no pueden pagarte la seña.
+        </p>
+
+        <div className="pt-2">
+          <Button type="submit" disabled={loading}>
+            {loading ? "Guardando..." : "Guardar Datos de Transferencia"}
           </Button>
         </div>
       </CardContent>

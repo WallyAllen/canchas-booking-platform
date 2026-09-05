@@ -38,7 +38,9 @@ export function BookingWizard({ booking }: BookingWizardProps) {
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [paymentMethod, setPaymentMethod] = useState<'mercadopago' | 'transfer'>('mercadopago')
+  // Mercado Pago queda deshabilitado ("Próximamente") hasta tener credenciales
+  // de producción; la transferencia bancaria es el método real por ahora.
+  const [paymentMethod, setPaymentMethod] = useState<'mercadopago' | 'transfer'>('transfer')
 
   const { depositAmount, requireDeposit } = booking
   const remainingAmount = booking.price - depositAmount
@@ -48,36 +50,31 @@ export function BookingWizard({ booking }: BookingWizardProps) {
 
   const handlePayment = async () => {
     setLoading(true)
-    
-    if (paymentMethod === 'mercadopago') {
-      try {
-        const res = await fetch('/api/booking/create-preference', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            title: `Reserva - ${booking.courtName} - ${booking.date}`,
-            
-            date: booking.date,
-            time: booking.time,
-            courtId: booking.courtId
-          })
+    setError(null)
+
+    try {
+      const res = await fetch('/api/booking/create-transfer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          courtId: booking.courtId,
+          date: booking.date,
+          time: booking.time
         })
-        
-        const data = await res.json()
-        if (data.initPoint) {
-          window.location.href = data.initPoint
-        } else {
-          throw new Error('No initPoint returned')
-        }
-      } catch (error) {
-        console.error('Error initiating payment:', error)
-        setError('Error al iniciar el pago con Mercado Pago.')
-        setLoading(false)
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || 'No se pudo crear la reserva')
       }
-    } else {
-      // Transferencia MVP
-      toast({ title: 'Éxito', description: 'En esta versión Demo, la transferencia redirige al éxito directamente simulando aprobación manual.' })
-      router.push(`/booking/court-id/success?booking_id=${(booking.id || '')}`)
+
+      router.push(data.redirectTo)
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'No se pudo crear la reserva.'
+      setError(message)
+      toast({ title: 'Error', description: message })
+      setLoading(false)
     }
   }
 
@@ -210,31 +207,44 @@ export function BookingWizard({ booking }: BookingWizardProps) {
             <div className="space-y-3">
               <h3 className="font-semibold text-sm uppercase text-muted-foreground tracking-wider">Método de Pago</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div 
-                  className={`border rounded-xl p-4 cursor-pointer transition-all ${paymentMethod === 'mercadopago' ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-border/50 hover:bg-muted/50'}`}
-                  onClick={() => setPaymentMethod('mercadopago')}
-                >
-                  <CreditCard className={`h-6 w-6 mb-3 ${paymentMethod === 'mercadopago' ? 'text-primary' : 'text-muted-foreground'}`} />
-                  <p className="font-semibold text-sm">Mercado Pago</p>
-                  <p className="text-xs text-muted-foreground mt-1">Tarjetas de crédito, débito o dinero en cuenta.</p>
-                </div>
-                <div 
-                  className={`border rounded-xl p-4 cursor-pointer transition-all ${paymentMethod === 'transfer' ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-border/50 hover:bg-muted/50'}`}
+                <button
+                  type="button"
+                  aria-pressed={paymentMethod === 'transfer'}
+                  className={`text-left border rounded-xl p-4 transition-all ${paymentMethod === 'transfer' ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-border/50 hover:bg-muted/50'}`}
                   onClick={() => setPaymentMethod('transfer')}
                 >
                   <Banknote className={`h-6 w-6 mb-3 ${paymentMethod === 'transfer' ? 'text-primary' : 'text-muted-foreground'}`} />
                   <p className="font-semibold text-sm">Transferencia</p>
-                  <p className="text-xs text-muted-foreground mt-1">Alias / CBU. Requiere adjuntar comprobante.</p>
+                  <p className="text-xs text-muted-foreground mt-1">Alias / CBU del complejo. Enviás el comprobante por el chat.</p>
+                </button>
+
+                <div
+                  aria-disabled="true"
+                  className="border border-border/50 rounded-xl p-4 opacity-60 cursor-not-allowed relative"
+                >
+                  <span className="absolute top-3 right-3 text-[10px] font-semibold uppercase tracking-wider bg-muted text-muted-foreground px-2 py-1 rounded-full">
+                    Próximamente
+                  </span>
+                  <CreditCard className="h-6 w-6 mb-3 text-muted-foreground" />
+                  <p className="font-semibold text-sm text-muted-foreground">Mercado Pago</p>
+                  <p className="text-xs text-muted-foreground mt-1">Tarjetas de crédito, débito o dinero en cuenta.</p>
                 </div>
               </div>
             </div>
 
+            {error && (
+              <div className="flex items-start gap-2 p-3 bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 rounded-md" aria-live="polite">
+                <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+                <span className="text-sm">{error}</span>
+              </div>
+            )}
+
             <div className="grid grid-cols-2 gap-4">
-              <Button variant="outline" className="w-full" onClick={handleBack}>
+              <Button variant="outline" className="w-full" onClick={handleBack} disabled={loading}>
                 Volver
               </Button>
               <Button className="w-full" onClick={handlePayment} disabled={loading}>
-                {loading ? "Procesando..." : "Ir a pagar"}
+                {loading ? "Reservando..." : "Reservar y ver datos de pago"}
               </Button>
             </div>
           </CardContent>

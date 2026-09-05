@@ -101,3 +101,54 @@ export async function updateVenuePaymentSettings(formData: FormData) {
 
   revalidatePath("/dashboard/venue")
 }
+
+/**
+ * Guarda el alias / CBU donde los jugadores transfieren la seña.
+ *
+ * Vive en `venue_payment_details` (027) y no en `venues` porque `venues` se lee
+ * públicamente: poner el CBU ahí lo expondría en la ficha del complejo.
+ */
+export async function updateVenueTransferDetails(formData: FormData) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error("No autenticado")
+
+  const venueId = formData.get("venue_id") as string
+  const alias = ((formData.get("alias") as string) || "").trim()
+  const cbu = ((formData.get("cbu") as string) || "").trim().replace(/\s/g, "")
+  const holder_name = ((formData.get("holder_name") as string) || "").trim()
+  const bank_name = ((formData.get("bank_name") as string) || "").trim()
+
+  if (!alias && !cbu) {
+    throw new Error("Cargá al menos un alias o un CBU para poder recibir transferencias")
+  }
+  if (cbu && !/^\d{22}$/.test(cbu)) {
+    throw new Error("El CBU debe tener exactamente 22 dígitos")
+  }
+
+  const { data: venue } = await supabase.from("venues")
+    .select("owner_id")
+    .eq("id", venueId)
+    .single()
+
+  // @ts-expect-error fix inference
+  if (!venue || venue.owner_id !== user.id) {
+    throw new Error("No autorizado")
+  }
+
+  const { error } = await supabase.from("venue_payment_details")
+    .upsert({
+      venue_id: venueId,
+      alias: alias || null,
+      cbu: cbu || null,
+      holder_name: holder_name || null,
+      bank_name: bank_name || null
+    } as never, { onConflict: "venue_id" })
+
+  if (error) {
+    console.error("updateVenueTransferDetails error:", error)
+    throw new Error("No se pudieron guardar los datos de transferencia")
+  }
+
+  revalidatePath("/dashboard/venue")
+}
