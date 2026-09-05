@@ -1,4 +1,4 @@
-/* eslint-disable jsx-a11y/label-has-associated-control */
+
 "use server"
 
 import { createClient, createAdminClient } from "@/lib/supabase/server"

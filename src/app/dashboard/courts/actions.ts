@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable jsx-a11y/label-has-associated-control */
+
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
@@ -148,9 +148,9 @@ export async function saveOffers(courtId: string, formData: FormData) {
 
   const offersJson = formData.get("offers") as string
   const basePriceStr = formData.get("basePrice") as string
-  
+
   if (!offersJson || !basePriceStr) throw new Error("Datos inválidos")
-    
+
   const offers = JSON.parse(offersJson)
   const basePrice = parseFloat(basePriceStr)
 
@@ -158,9 +158,9 @@ export async function saveOffers(courtId: string, formData: FormData) {
   // Wait, if we just delete everything and recreate, it's easier to manage for MVP.
   // We'll delete ALL rules for the court and recreate the base rules + promo rules.
   await supabase.from("pricing_rules").delete().eq("court_id", courtId)
-  
+
   const rules = []
-  
+
   // Create base rules for each day (0-6)
   // We'll just create a full day base rule. If a promo overlaps, our app logic (or a more complex query)
   // would need to handle it. For MVP, we insert both base rules and promo rules.
@@ -175,7 +175,7 @@ export async function saveOffers(courtId: string, formData: FormData) {
       is_promo_active: false
     })
   }
-  
+
   // Add promo rules
   for (const offer of offers) {
     const promoPrice = basePrice * (1 - (offer.discount_percentage / 100))

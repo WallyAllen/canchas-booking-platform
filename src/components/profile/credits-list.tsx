@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Wallet, Clock } from "lucide-react"
 
 export function CreditsList({ userId }: { userId: string }) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [credits, setCredits] = useState<any[]>([])
   const [availableCredits, setAvailableCredits] = useState(0)
@@ -20,7 +20,7 @@ export function CreditsList({ userId }: { userId: string }) {
         .select("*, bookings(courts(name, venues(name)))")
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
-      
+
       if (data) {
         setCredits(data)
         const total = data
@@ -29,7 +29,7 @@ export function CreditsList({ userId }: { userId: string }) {
         setAvailableCredits(total)
       }
     }
-    
+
     if (userId) {
       fetchCredits()
     }
@@ -48,7 +48,7 @@ export function CreditsList({ userId }: { userId: string }) {
         <div className="text-4xl font-bold text-primary mb-4">
           ${availableCredits.toLocaleString('es-AR')}
         </div>
-        
+
         <div className="space-y-4 mt-6 max-h-[400px] overflow-y-auto pr-2">
           {credits.length > 0 ? (
             Object.entries(
@@ -74,7 +74,7 @@ export function CreditsList({ userId }: { userId: string }) {
                   {data.list.map((credit: import("@/types/domain").Credit) => {
                     const isAvailable = credit.status === 'available'
                     const isUsed = credit.status === 'used'
-                    
+
                     return (
                       <div key={credit.id} className="flex justify-between items-center text-sm">
                         <div className="flex items-center gap-2">

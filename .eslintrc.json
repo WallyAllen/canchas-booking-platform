@@ -1,4 +1,13 @@
 {
   "extends": ["next/core-web-vitals", "next/typescript", "plugin:jsx-a11y/recommended"],
-  "plugins": ["jsx-a11y"]
+  "plugins": ["jsx-a11y"],
+  "reportUnusedDisableDirectives": true,
+  "rules": {
+    "@typescript-eslint/no-explicit-any": "error",
+    "@typescript-eslint/ban-ts-comment": ["error", {
+      "ts-expect-error": "allow-with-description",
+      "ts-ignore": true,
+      "ts-nocheck": true
+    }]
+  }
 }

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { createClient, createAdminClient } from "@/lib/supabase/server"
 
 export function calculateCancellationPolicy(booking: any) {
@@ -46,13 +46,13 @@ export function canReschedule(booking: any) {
   if (diffHours >= 2) {
     return { allowed: true, reason: 'Reprogramación permitida.' }
   }
-  
+
   return { allowed: false, reason: 'Reprogramación no permitida con menos de 2 horas de anticipación.' }
 }
 
 export async function createCredit(userId: string, bookingId: string, venueId: string, amount: number) {
   const supabase = createAdminClient()
-  
+
   const expiresAt = new Date()
   expiresAt.setDate(expiresAt.getDate() + 90) // 90 días de validez
 

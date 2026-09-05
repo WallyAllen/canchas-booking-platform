@@ -33,7 +33,7 @@ const DAYS = [
 
 export function OffersModal({ courtId, basePrice }: { courtId: string, basePrice: number }) {
   const [open, setOpen] = useState(false)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [offers, setOffers] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
@@ -101,7 +101,7 @@ export function OffersModal({ courtId, basePrice }: { courtId: string, basePrice
             Definí descuentos por día y horario. Precio base actual: ${basePrice}
           </DialogDescription>
         </DialogHeader>
-        
+
         {loading ? (
           <div className="py-8 text-center text-muted-foreground">Cargando...</div>
         ) : (
@@ -125,7 +125,7 @@ export function OffersModal({ courtId, basePrice }: { courtId: string, basePrice
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
-                      
+
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pr-6">
                         <div>
                           <label className="text-xs font-medium text-muted-foreground">Día</label>
@@ -151,7 +151,7 @@ export function OffersModal({ courtId, basePrice }: { courtId: string, basePrice
                           <Input type="number" min="1" max="99" className="h-8 text-xs" value={offer.discount_percentage} onChange={e => updateOffer(offer.id, "discount_percentage", parseInt(e.target.value) || 0)} required />
                         </div>
                       </div>
-                      
+
                       <div className="flex justify-between items-center pt-2 border-t border-border/50">
                         <span className="text-xs text-muted-foreground">Precio final (aprox)</span>
                         <span className="font-bold text-primary">${netPrice.toFixed(0)}</span>
@@ -160,12 +160,12 @@ export function OffersModal({ courtId, basePrice }: { courtId: string, basePrice
                   )
                 })
               )}
-              
+
               <Button type="button" variant="outline" className="w-full border-dashed" onClick={addOffer}>
                 <Plus className="mr-2 h-4 w-4" /> Agregar Oferta
               </Button>
             </div>
-            
+
             <div className="pt-4 mt-2 border-t">
               <SubmitButton />
             </div>

@@ -1,4 +1,4 @@
-/* eslint-disable jsx-a11y/label-has-associated-control */
+
 "use server"
 
 import { createClient } from "@/lib/supabase/server"
@@ -21,7 +21,7 @@ export async function updateVenueProfile(formData: FormData) {
   // Geocoding simple con Nominatim
   let latitude = manualLat ? parseFloat(manualLat) : null
   let longitude = manualLng ? parseFloat(manualLng) : null
-  
+
   if (address && city && latitude === null && longitude === null) {
     try {
       const q = encodeURIComponent(`${address}, ${city}, Argentina`)

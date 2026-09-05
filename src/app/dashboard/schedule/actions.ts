@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable jsx-a11y/label-has-associated-control */
+
 "use server"
 
 import { createClient } from "@/lib/supabase/server"

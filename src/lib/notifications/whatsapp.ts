@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
+
 // WhatsApp API Integration using Meta Cloud API
 // In production, requires WHATSAPP_TOKEN and WHATSAPP_PHONE_NUMBER_ID
 
@@ -15,7 +15,7 @@ export async function sendWhatsAppBookingConfirmation(phone: string, booking: an
 
   try {
     const cleanPhone = phone.replace(/\D/g, '')
-    
+
     // Asumimos que existe un template aprobado llamado "booking_confirmed"
     const body = {
       messaging_product: "whatsapp",
@@ -63,7 +63,7 @@ export async function sendWhatsAppReminder(phone: string, booking: any, venue: a
 
   try {
     const cleanPhone = phone.replace(/\D/g, '')
-    
+
     // Asumimos que existe un template aprobado llamado "booking_reminder"
     const body = {
       messaging_product: "whatsapp",

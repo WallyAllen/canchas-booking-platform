@@ -1,8 +1,8 @@
 "use client"
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */
+
+
 import { toast } from '@/components/ui/use-toast'
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
@@ -91,7 +91,7 @@ export function BookingWizard({ booking }: BookingWizardProps) {
           className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-primary -z-10 transition-all duration-300" 
           style={{ width: `${((step - 1) / 2) * 100}%` }}
         />
-        
+
         {[1, 2, 3].map((num) => (
           <div 
             key={num} 

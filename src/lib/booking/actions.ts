@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { createClient } from "@/lib/supabase/server"
 import { calculateCancellationPolicy, createCredit, canReschedule } from "@/lib/credits/manager"
 
 export async function cancelBooking(bookingId: string) {
   const supabase = await createClient()
-  
+
   // 1. Get user and booking
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error("No autenticado")
@@ -39,7 +39,7 @@ export async function cancelBooking(bookingId: string) {
   if (policy.refundType === 'credit' && policy.creditAmount > 0) {
     await createCredit(user.id, booking.id, booking.courts.venues.id, policy.creditAmount)
   }
-  
+
   // 5. Notificar
   const { notify } = await import('@/lib/notifications')
   await notify('booking_cancelled', {
@@ -54,7 +54,7 @@ export async function cancelBooking(bookingId: string) {
 
 export async function rescheduleBooking(bookingId: string, newDate: string, newTime: string) {
   const supabase = await createClient()
-  
+
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error("No autenticado")
 
@@ -65,7 +65,7 @@ export async function rescheduleBooking(bookingId: string, newDate: string, newT
     .single()
 
   if (getError || !booking) throw new Error("Reserva no encontrada")
-  
+
   const policy = canReschedule(booking)
   if (!policy.allowed) {
     throw new Error(policy.reason)

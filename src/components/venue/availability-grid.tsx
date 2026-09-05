@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
 import { useState, useEffect } from "react"
@@ -16,7 +16,7 @@ interface AvailabilityGridProps {
 export function AvailabilityGrid({ venueId, courts }: AvailabilityGridProps) {
   const router = useRouter()
   const supabase = createClient()
-  
+
   // Format Date to YYYY-MM-DD local
   const getLocalDateString = (date: Date) => {
     const offset = date.getTimezoneOffset() * 60000
@@ -42,7 +42,7 @@ export function AvailabilityGrid({ venueId, courts }: AvailabilityGridProps) {
             p_venue_id: venueId, 
             p_date: dateStr 
           })
-          
+
         if (error) throw error
         setBookings(data || [])
       } catch (error) {
@@ -67,7 +67,7 @@ export function AvailabilityGrid({ venueId, courts }: AvailabilityGridProps) {
     const prev = new Date(selectedDate)
     const today = new Date()
     today.setHours(0,0,0,0)
-    
+
     prev.setDate(prev.getDate() - 1)
     if (prev >= today) {
       setSelectedDate(prev)
@@ -93,7 +93,7 @@ export function AvailabilityGrid({ venueId, courts }: AvailabilityGridProps) {
     <div id="availability-grid" className="space-y-6 scroll-mt-24">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <h3 className="text-xl font-bold">Disponibilidad</h3>
-        
+
         <div className="flex items-center gap-2 bg-muted p-1 rounded-lg">
           <Button variant="ghost" size="icon" onClick={prevDay} disabled={isToday || loading} className="h-8 w-8">
             <ChevronLeft className="h-4 w-4" />
@@ -114,7 +114,7 @@ export function AvailabilityGrid({ venueId, courts }: AvailabilityGridProps) {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         )}
-        
+
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left border-collapse min-w-[800px]">
             <thead className="bg-muted/50 text-xs uppercase">
@@ -136,13 +136,13 @@ export function AvailabilityGrid({ venueId, courts }: AvailabilityGridProps) {
                     {court.name}
                     <div className="text-[10px] text-muted-foreground font-normal">{court.type} - {court.surface}</div>
                   </td>
-                  
+
                   {hours.map((hour) => {
                     const timeStr = `${hour.toString().padStart(2, '0')}:00:00`
                     const isBooked = bookings.some(
                       b => b.court_id === court.id && b.start_time === timeStr
                     )
-                    
+
                     // Comprobar si la hora ya pasó (si es hoy)
                     const now = new Date()
                     const isPast = isToday && hour <= now.getHours()
@@ -174,7 +174,7 @@ export function AvailabilityGrid({ venueId, courts }: AvailabilityGridProps) {
           </table>
         </div>
       </div>
-      
+
       <div className="flex items-center justify-end gap-4 text-xs text-muted-foreground">
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded bg-primary/20 border border-primary/30"></div> Libre

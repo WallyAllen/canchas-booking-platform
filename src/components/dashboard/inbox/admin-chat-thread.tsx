@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 "use client"
 import { AdminMessageList } from './admin-message-list'
 import { AdminInputBar } from './admin-input-bar'
@@ -30,14 +30,14 @@ export function AdminChatThread({ conversation, venueId, _onBack }: AdminChatThr
   const [_isUploading, setIsUploading] = useState(false)
   const [isSending, setIsSending] = useState(false)
   const [_unreadUserCount, setUnreadUserCount] = useState(conversation?.unread_user_count || 0)
-  
+
   const scrollRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const supabase = createClient()
 
   const [isOtherTyping, setIsOtherTyping] = useState(false)
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  
+
   const [_latestBooking, setLatestBooking] = useState<{
     id: string,
     booking_date: string,
@@ -47,7 +47,7 @@ export function AdminChatThread({ conversation, venueId, _onBack }: AdminChatThr
 
   useEffect(() => {
     if (!conversation?.user_id) return
-    
+
     const fetchBooking = async () => {
       const { data } = await supabase
         .from('bookings')
@@ -58,19 +58,19 @@ export function AdminChatThread({ conversation, venueId, _onBack }: AdminChatThr
         .order('booking_date', { ascending: false })
         .limit(1)
         .single()
-        
+
       if (data) {
         // @ts-expect-error fix inference
         setLatestBooking(data as unknown)
       }
     }
-    
+
     fetchBooking()
   }, [conversation?.user_id, venueId, supabase])
 
   useEffect(() => {
     if (!conversation?.id) return
-    
+
     let isMounted = true
     setIsLoading(true)
 
@@ -80,14 +80,14 @@ export function AdminChatThread({ conversation, venueId, _onBack }: AdminChatThr
         .select("*")
         .eq("conversation_id", conversation.id)
         .order("created_at", { ascending: true })
-      
+
       if (isMounted) {
         if (data) setMessages(data)
         setIsLoading(false)
         await markConversationAsRead(conversation.id, 'venue')
       }
     }
-    
+
     loadMessages()
 
     const channel = supabase
@@ -129,17 +129,17 @@ export function AdminChatThread({ conversation, venueId, _onBack }: AdminChatThr
 
   const _handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value)
-    
+
     if (!conversation?.id) return
-    
+
     supabase.channel(`chat_${conversation.id}`).send({
       type: 'broadcast',
       event: 'typing',
       payload: { isTyping: true, senderType: 'venue' }
     })
-    
+
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
-    
+
     typingTimeoutRef.current = setTimeout(() => {
       supabase.channel(`chat_${conversation.id}`).send({
         type: 'broadcast',
@@ -152,12 +152,12 @@ export function AdminChatThread({ conversation, venueId, _onBack }: AdminChatThr
   const _handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file || !conversation?.id) return
-    
+
     setIsUploading(true)
     try {
       const fileExt = file.name.split('.').pop()
       const fileName = `${conversation.id}/${Date.now()}.${fileExt}`
-      
+
       const { error } = await supabase.storage
         .from('chat-images')
         .upload(fileName, file)
@@ -179,12 +179,12 @@ export function AdminChatThread({ conversation, venueId, _onBack }: AdminChatThr
   const _handleSend = async (e: React.FormEvent | React.MouseEvent) => {
     e.preventDefault()
     if (!inputValue || !inputValue.trim() || isSending) return
-    
+
     if (!conversation?.id) {
       alert("Error: No se encontró la conversación activa.")
       return
     }
-    
+
     setIsSending(true)
     const text = inputValue.trim()
     try {

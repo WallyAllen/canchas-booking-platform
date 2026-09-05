@@ -1,4 +1,4 @@
-/* eslint-disable jsx-a11y/label-has-associated-control */
+
 "use client"
 import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -13,7 +13,7 @@ export function ScheduleNavigation({ currentDate }: { currentDate: string }) {
     const date = new Date(currentDate + "T12:00:00")
     date.setDate(date.getDate() + days)
     const newDateStr = date.toISOString().split('T')[0]
-    
+
     const params = new URLSearchParams(searchParams.toString())
     params.set('date', newDateStr)
     router.push(`${pathname}?${params.toString()}`)

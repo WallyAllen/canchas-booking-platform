@@ -1,4 +1,4 @@
-/* eslint-disable jsx-a11y/label-has-associated-control */
+
 "use client"
 
 import { useState } from "react"
@@ -32,17 +32,17 @@ export function VenuePhotosForm({ venueId, initialPhotos }: VenuePhotosFormProps
     try {
       const fileExt = file.name.split('.').pop()
       const fileName = `${venueId}/${Date.now()}.${fileExt}`
-      
+
       const { error: uploadError } = await supabase.storage
         .from('venue-photos')
         .upload(fileName, file)
-        
+
       if (uploadError) throw uploadError
-      
+
       const { data: { publicUrl } } = supabase.storage
         .from('venue-photos')
         .getPublicUrl(fileName)
-        
+
       setPhotos([...photos, publicUrl])
       toast.add({
         title: "Foto subida",
@@ -70,7 +70,7 @@ export function VenuePhotosForm({ venueId, initialPhotos }: VenuePhotosFormProps
       })
       return
     }
-    
+
     // basic validation
     try {
       new URL(newPhotoUrl)
@@ -92,7 +92,7 @@ export function VenuePhotosForm({ venueId, initialPhotos }: VenuePhotosFormProps
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+
       const { error } = await supabase.from("venues")
         .update({ photos })
         .eq("id", venueId)
@@ -147,7 +147,7 @@ export function VenuePhotosForm({ venueId, initialPhotos }: VenuePhotosFormProps
               )}
               Subir desde equipo
             </Button>
-            
+
             <div className="relative flex-1 hidden sm:block">
               <ImageIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
