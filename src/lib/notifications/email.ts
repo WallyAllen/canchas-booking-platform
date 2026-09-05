@@ -1,6 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Resend } from 'resend'
+import { Booking, Profile, Venue } from '@/types/domain'
 import { 
   bookingConfirmationTemplate, 
   reminderTemplate, 
@@ -11,7 +10,7 @@ import {
 const resend = new Resend(process.env.RESEND_API_KEY || 're_dummy_key')
 const FROM_EMAIL = 'El Potrero <noreply@elpotrero.ar>'
 
-export async function sendBookingConfirmation(booking: any, user: any, venue: any) {
+export async function sendBookingConfirmation(booking: Booking, user: Profile, venue: Venue) {
   try {
     if (!user.email) return
 
@@ -26,7 +25,7 @@ export async function sendBookingConfirmation(booking: any, user: any, venue: an
   }
 }
 
-export async function sendBookingReminder(booking: any, user: any, venue: any) {
+export async function sendBookingReminder(booking: Booking, user: Profile, venue: Venue) {
   try {
     if (!user.email) return
 
@@ -41,7 +40,7 @@ export async function sendBookingReminder(booking: any, user: any, venue: any) {
   }
 }
 
-export async function sendBookingCancellation(booking: any, user: any, venue: any, creditAmount: number = 0) {
+export async function sendBookingCancellation(booking: Booking, user: Profile, venue: Venue, creditAmount: number = 0) {
   try {
     if (!user.email) return
 
@@ -56,7 +55,7 @@ export async function sendBookingCancellation(booking: any, user: any, venue: an
   }
 }
 
-export async function sendWelcomeEmail(user: any) {
+export async function sendWelcomeEmail(user: Profile) {
   try {
     if (!user.email) return
 

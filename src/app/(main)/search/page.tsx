@@ -62,7 +62,7 @@ export default async function SearchPage({
     }
   }
 
-  const { data: venuesData, error } = await query
+  const { data: venuesDataRaw, error } = await query
 
   if (error) {
     console.error("Error fetching search results:", error)
@@ -71,26 +71,42 @@ export default async function SearchPage({
   // Filtrado post-query para relaciones complejas (tipos de canchas, precios, superficies)
   const filteredVenues: SearchVenueItem[] = []
 
+  interface SearchVenueData {
+    id: string
+    name: string
+    address: string
+    city: string
+    avg_rating: number
+    review_count: number
+    photos: string[] | null
+    latitude: number | null
+    longitude: number | null
+    require_deposit: boolean | null
+    courts: {
+      type: string
+      surface: string
+      pricing_rules: {
+        price: number
+      }[]
+    }[]
+  }
+
+  const venuesData = venuesDataRaw as unknown as SearchVenueData[] | null
+
   if (venuesData) {
-    venuesData.forEach((venue: unknown ) => {
+    venuesData.forEach((venue) => {
       // Collect all court types and surfaces, and find min price
       const typesSet = new Set<string>()
       const surfacesSet = new Set<string>()
       let venueMinPrice = Infinity
       let venueMaxPrice = 0
 
-      // @ts-expect-error fix inference
-      venue.courts?.forEach((court: unknown ) => {
-        // @ts-expect-error fix inference
+      venue.courts?.forEach((court) => {
         if (court.type) typesSet.add(court.type)
-        // @ts-expect-error fix inference
         if (court.surface) surfacesSet.add(court.surface)
         
-        // @ts-expect-error fix inference
-        court.pricing_rules?.forEach((rule: unknown ) => {
-          // @ts-expect-error fix inference
+        court.pricing_rules?.forEach((rule) => {
           if (rule.price < venueMinPrice) venueMinPrice = rule.price
-          // @ts-expect-error fix inference
           if (rule.price > venueMaxPrice) venueMaxPrice = rule.price
         })
       })
@@ -104,33 +120,22 @@ export default async function SearchPage({
       const hasMatchingPrice = 
         (!minPrice || venueMaxPrice >= minPrice) && 
         (maxPrice === Infinity || venueMinPrice <= maxPrice)
-      // @ts-expect-error fix inference
       const hasMatchingDeposit = requireDepositFilter === null || venue.require_deposit === requireDepositFilter
 
       if (hasMatchingType && hasMatchingSurface && hasMatchingPrice && hasMatchingDeposit) {
         filteredVenues.push({
-          // @ts-expect-error fix inference
           id: venue.id,
-          // @ts-expect-error fix inference
           name: venue.name,
-          // @ts-expect-error fix inference
           address: venue.address,
-          // @ts-expect-error fix inference
           city: venue.city,
-          // @ts-expect-error fix inference
           avg_rating: venue.avg_rating,
-          // @ts-expect-error fix inference
           review_count: venue.review_count,
-          // @ts-expect-error fix inference
           featured_image: venue.photos?.[0] || null,
-          // @ts-expect-error fix inference
           latitude: venue.latitude,
-          // @ts-expect-error fix inference
           longitude: venue.longitude,
           min_price: venueMinPrice,
           court_types: Array.from(typesSet),
-          // @ts-expect-error fix inference
-          require_deposit: venue.require_deposit
+          require_deposit: venue.require_deposit ?? undefined
         })
       }
     })

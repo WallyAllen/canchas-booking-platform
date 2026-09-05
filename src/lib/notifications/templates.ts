@@ -1,6 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-export const bookingConfirmationTemplate = (booking: any, user: any, venue: any) => `
+import { Booking, Profile, Venue } from '@/types/domain'
+
+export const bookingConfirmationTemplate = (booking: Booking, user: Profile, venue: Venue) => `
 <!DOCTYPE html>
 <html>
 <head>
@@ -46,7 +46,7 @@ export const bookingConfirmationTemplate = (booking: any, user: any, venue: any)
 </html>
 `
 
-export const reminderTemplate = (booking: any, user: any, venue: any) => `
+export const reminderTemplate = (booking: Booking, user: Profile, venue: Venue) => `
 <!DOCTYPE html>
 <html>
 <head>
@@ -85,7 +85,7 @@ export const reminderTemplate = (booking: any, user: any, venue: any) => `
 </html>
 `
 
-export const cancellationTemplate = (booking: any, user: any, venue: any, creditAmount: number) => `
+export const cancellationTemplate = (booking: Booking, user: Profile, venue: Venue, creditAmount: number) => `
 <!DOCTYPE html>
 <html>
 <head>
@@ -128,7 +128,7 @@ export const cancellationTemplate = (booking: any, user: any, venue: any, credit
 </html>
 `
 
-export const welcomeTemplate = (user: any) => `
+export const welcomeTemplate = (user: Profile) => `
 <!DOCTYPE html>
 <html>
 <head>

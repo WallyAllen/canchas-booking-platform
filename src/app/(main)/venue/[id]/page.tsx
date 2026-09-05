@@ -38,33 +38,37 @@ const getVenueData = unstable_cache(
     // 3. Fetch Pricing Rules
     let pricingRules: PricingRule[] = []
     if (courts.length > 0) {
-      const { data: rulesData } = await supabase
+      const { data: rulesDataRaw } = await supabase
         .from("pricing_rules")
         .select("*, courts(name)")
         .in("court_id", courts.map(c => c.id))
 
-      pricingRules = (rulesData || []).map((rule: unknown) => ({
-        // @ts-expect-error fix inference
-        id: rule.id,
-        // @ts-expect-error fix inference
-        court_name: rule.courts.name,
-        // @ts-expect-error fix inference
-        day_of_week: rule.day_of_week,
-        // @ts-expect-error fix inference
-        start_time: rule.start_time,
-        // @ts-expect-error fix inference
-        end_time: rule.end_time,
-        // @ts-expect-error fix inference
-        price: rule.price,
-        // @ts-expect-error fix inference
-        promo_price: rule.promo_price,
-        // @ts-expect-error fix inference
-        is_promo_active: rule.is_promo_active
-      }))
+      const rulesData = rulesDataRaw as unknown as ({ id: string, day_of_week: number, start_time: string, end_time: string, price: number, promo_price: number | null, is_promo_active: boolean, courts: { name: string } | { name: string }[] | null })[] | null
+
+      pricingRules = (rulesData || []).map((rule) => {
+        let court_name = ""
+        if (rule.courts) {
+          if (Array.isArray(rule.courts)) {
+             court_name = rule.courts[0]?.name || ""
+          } else {
+             court_name = rule.courts.name || ""
+          }
+        }
+        return {
+          id: rule.id,
+          court_name,
+          day_of_week: rule.day_of_week,
+          start_time: rule.start_time,
+          end_time: rule.end_time,
+          price: rule.price,
+          promo_price: rule.promo_price,
+          is_promo_active: rule.is_promo_active
+        }
+      })
     }
 
     // 4. Fetch Reviews
-    const { data: reviewsData } = await supabase
+    const { data: reviewsDataRaw } = await supabase
       .from("reviews")
       .select(`
         id, rating, comment, venue_response, created_at,
@@ -73,8 +77,39 @@ const getVenueData = unstable_cache(
       .eq("venue_id", venue.id)
       .order("created_at", { ascending: false })
 
-    // @ts-expect-error fix inference
-    const reviews: ReviewItem[] = (reviewsData || []) as unknown
+    const reviewsData = reviewsDataRaw as unknown as {
+      id: string
+      rating: number
+      comment: string | null
+      venue_response: string | null
+      created_at: string
+      public_user_profiles: { full_name: string | null, avatar_url: string | null } | { full_name: string | null, avatar_url: string | null }[] | null
+    }[] | null
+
+    const reviews: ReviewItem[] = (reviewsData || []).map((review) => {
+      let full_name = ""
+      let avatar_url = ""
+      if (review.public_user_profiles) {
+        if (Array.isArray(review.public_user_profiles)) {
+          full_name = review.public_user_profiles[0]?.full_name || ""
+          avatar_url = review.public_user_profiles[0]?.avatar_url || ""
+        } else {
+          full_name = review.public_user_profiles.full_name || ""
+          avatar_url = review.public_user_profiles.avatar_url || ""
+        }
+      }
+      return {
+        id: review.id,
+        rating: review.rating,
+        comment: review.comment,
+        reply: review.venue_response,
+        created_at: review.created_at,
+        public_user_profiles: {
+          full_name,
+          avatar_url: avatar_url || null
+        }
+      }
+    })
 
     return { venue, courts, pricingRules, reviews }
   },

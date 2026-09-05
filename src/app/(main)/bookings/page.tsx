@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createClient } from "@/lib/supabase/server"
+import { BookingWithDetails } from "@/types/domain"
 import Image from "next/image"
 import { redirect } from "next/navigation"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -19,7 +19,8 @@ export default async function BookingsPage() {
   
   if (!user) redirect("/login?returnUrl=/bookings")
 
-  const { data: bookingsData } = await (supabase.from("bookings") as any)
+  const { data: bookingsDataRaw } = await supabase
+    .from("bookings")
     .select(`
       *,
       courts (
@@ -33,8 +34,7 @@ export default async function BookingsPage() {
       )
     `)
     .eq("user_id", user.id)
-    .order("booking_date", { ascending: false })
-    .order("start_time", { ascending: false })
+  const bookingsData = bookingsDataRaw as unknown as BookingWithDetails[] | null
 
   const bookings = bookingsData || []
 
@@ -44,19 +44,19 @@ export default async function BookingsPage() {
   const todayStr = nowLocal.toISOString().split('T')[0]
   const timeStr = nowLocal.toISOString().split('T')[1].substring(0, 8)
 
-  const upcoming = bookings.filter((b: any) => 
+  const upcoming = bookings.filter((b) => 
     b.status !== "cancelled" && 
     (b.booking_date > todayStr || (b.booking_date === todayStr && b.start_time > timeStr))
   )
   
-  const past = bookings.filter((b: any) => 
+  const past = bookings.filter((b) => 
     b.status !== "cancelled" && 
     (b.booking_date < todayStr || (b.booking_date === todayStr && b.start_time <= timeStr))
   )
   
-  const cancelled = bookings.filter((b: any) => b.status === "cancelled")
+  const cancelled = bookings.filter((b) => b.status === "cancelled")
 
-  const renderBookingCard = (booking: any, isPast: boolean) => {
+  const renderBookingCard = (booking: BookingWithDetails, isPast: boolean) => {
     const dateObj = new Date(`${booking.booking_date}T12:00:00`)
     const displayDate = dateObj.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' })
     const statusLabel = booking.status === 'cancelled' ? 'Cancelada' : booking.status === 'pending' ? 'Pendiente' : isPast ? 'Completada' : 'Confirmada'
@@ -166,15 +166,15 @@ export default async function BookingsPage() {
         </TabsList>
         
         <TabsContent value="upcoming" className="space-y-4">
-          {upcoming.length > 0 ? upcoming.map((b: any) => renderBookingCard(b, false)) : renderEmptyState("próximas")}
+          {upcoming.length > 0 ? upcoming.map((b) => renderBookingCard(b, false)) : renderEmptyState("próximas")}
         </TabsContent>
         
         <TabsContent value="past" className="space-y-4">
-          {past.length > 0 ? past.map((b: any) => renderBookingCard(b, true)) : renderEmptyState("pasadas")}
+          {past.length > 0 ? past.map((b) => renderBookingCard(b, true)) : renderEmptyState("pasadas")}
         </TabsContent>
         
         <TabsContent value="cancelled" className="space-y-4">
-          {cancelled.length > 0 ? cancelled.map((b: any) => renderBookingCard(b, true)) : renderEmptyState("canceladas")}
+          {cancelled.length > 0 ? cancelled.map((b) => renderBookingCard(b, true)) : renderEmptyState("canceladas")}
         </TabsContent>
       </Tabs>
     </div>
