@@ -5,6 +5,48 @@
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 
+/**
+ * Verifica que la cancha pertenezca a un complejo del usuario.
+ *
+ * Las policies de `002_rls_policies.sql` ya bloquean escribir sobre canchas
+ * ajenas, así que esto es defensa en profundidad — pero el resto del dashboard
+ * (`venue/actions.ts`, `schedule/actions.ts`, `bookings/actions.ts`) chequea
+ * propiedad en la Server Action y este archivo era el único que no. Además
+ * cambia el modo de fallar: sin el chequeo, `updatePricing` primero borra las
+ * reglas y recién falla al insertar, apoyándose en que RLS filtre el DELETE.
+ * Con el chequeo, no se escribe nada.
+ */
+async function assertOwnsCourt(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  courtId: string,
+  userId: string
+) {
+  // `src/types/database.ts` está escrito a mano y solo define `Relationships` en
+  // una tabla. La inferencia de `select()` de Supabase la necesita en todas, así
+  // que sin ella el `data` colapsa a `never` (de ahí los `@ts-expect-error` que
+  // hay repartidos por el dashboard). Acotamos la forma que la query realmente
+  // devuelve, en vez de apagar el chequeo de tipos.
+  const { data: courtRow } = await supabase
+    .from("courts")
+    .select("venue_id")
+    .eq("id", courtId)
+    .single()
+
+  const venueId = (courtRow as { venue_id: string } | null)?.venue_id
+  if (!venueId) throw new Error("No autorizado")
+
+  const { data: venueRow } = await supabase
+    .from("venues")
+    .select("owner_id")
+    .eq("id", venueId)
+    .single()
+
+  const ownerId = (venueRow as { owner_id: string } | null)?.owner_id
+  if (ownerId !== userId) {
+    throw new Error("No autorizado")
+  }
+}
+
 export async function createCourt(formData: FormData) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -48,7 +90,8 @@ export async function toggleCourtStatus(courtId: string, isActive: boolean) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error("No autenticado")
 
-  // The RLS policy should ensure only the owner can update it
+  await assertOwnsCourt(supabase, courtId, user.id)
+
   const { error } = await (supabase.from("courts") as any)
     .update({ is_active: isActive })
     .eq("id", courtId)
@@ -65,6 +108,8 @@ export async function updatePricing(courtId: string, formData: FormData) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error("No autenticado")
+
+  await assertOwnsCourt(supabase, courtId, user.id)
 
   const price = parseFloat(formData.get("price") as string)
 
@@ -98,6 +143,8 @@ export async function saveOffers(courtId: string, formData: FormData) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error("No autenticado")
+
+  await assertOwnsCourt(supabase, courtId, user.id)
 
   const offersJson = formData.get("offers") as string
   const basePriceStr = formData.get("basePrice") as string
