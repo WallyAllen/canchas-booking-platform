@@ -264,6 +264,7 @@ export interface Database {
           mp_payment_id: string | null
           created_at: string
           cancelled_at: string | null
+          cancelled_reason: string | null
           transfer_reported_at: string | null
         }
         Insert: {
@@ -282,6 +283,7 @@ export interface Database {
           mp_payment_id?: string | null
           created_at?: string
           cancelled_at?: string | null
+          cancelled_reason?: string | null
         }
         Update: {
           id?: string
@@ -299,6 +301,7 @@ export interface Database {
           mp_payment_id?: string | null
           created_at?: string
           cancelled_at?: string | null
+          cancelled_reason?: string | null
         }
         Relationships: [
           {
@@ -524,6 +527,56 @@ export interface Database {
           }
         ]
       }
+      payment_reconciliations: {
+        Row: {
+          id: string
+          mp_payment_id: string
+          booking_id: string | null
+          reason: PaymentReconciliationReason
+          amount: number | null
+          payer_email: string | null
+          status: 'pending' | 'refunded' | 'dismissed'
+          resolved_by: string | null
+          resolved_at: string | null
+          notes: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          mp_payment_id: string
+          booking_id?: string | null
+          reason: PaymentReconciliationReason
+          amount?: number | null
+          payer_email?: string | null
+          status?: 'pending' | 'refunded' | 'dismissed'
+          resolved_by?: string | null
+          resolved_at?: string | null
+          notes?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          mp_payment_id?: string
+          booking_id?: string | null
+          reason?: PaymentReconciliationReason
+          amount?: number | null
+          payer_email?: string | null
+          status?: 'pending' | 'refunded' | 'dismissed'
+          resolved_by?: string | null
+          resolved_at?: string | null
+          notes?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_reconciliations_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -551,3 +604,13 @@ export interface Database {
     }
   }
 }
+
+/**
+ * Por qué un pago aprobado quedó sin reserva que confirmar. Espeja el CHECK de
+ * `reason` en la migración 032; si se agrega un motivo allá, va también acá.
+ */
+export type PaymentReconciliationReason =
+  | 'reserva_inexistente'
+  | 'cancelada_a_proposito'
+  | 'turno_ya_vencido'
+  | 'turno_reasignado'

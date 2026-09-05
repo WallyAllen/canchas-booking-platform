@@ -2,7 +2,7 @@ import { redirect } from "next/navigation"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
 import { Header } from "@/components/layout/Header"
-import { LayoutDashboard, Users, Building, Shield } from "lucide-react"
+import { LayoutDashboard, Users, Building, Shield, Wallet } from "lucide-react"
 
 export default async function AdminLayout({
   children,
@@ -52,6 +52,10 @@ export default async function AdminLayout({
             <Link href="/admin/moderation" className="flex items-center gap-3 rounded-lg px-3 py-2 transition-all text-muted-foreground hover:bg-muted hover:text-primary">
               <Shield className="h-4 w-4" />
               <span className="text-sm font-medium">Moderación</span>
+            </Link>
+            <Link href="/admin/reconciliation" className="flex items-center gap-3 rounded-lg px-3 py-2 transition-all text-muted-foreground hover:bg-muted hover:text-primary">
+              <Wallet className="h-4 w-4" />
+              <span className="text-sm font-medium">Reconciliación</span>
             </Link>
           </nav>
         </aside>
