@@ -82,7 +82,10 @@ export function useUser() {
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/callback?next=${next}`,
+        // encodeURIComponent: sin esto, un next con query propia
+        // (`/booking/x/transfer?booking_id=y`) se parsea como dos params del
+        // callback y el destino llega truncado.
+        redirectTo: `${window.location.origin}/callback?next=${encodeURIComponent(next)}`,
       },
     })
   }
@@ -91,7 +94,10 @@ export function useUser() {
     await supabase.auth.signInWithOAuth({
       provider: 'facebook',
       options: {
-        redirectTo: `${window.location.origin}/callback?next=${next}`,
+        // encodeURIComponent: sin esto, un next con query propia
+        // (`/booking/x/transfer?booking_id=y`) se parsea como dos params del
+        // callback y el destino llega truncado.
+        redirectTo: `${window.location.origin}/callback?next=${encodeURIComponent(next)}`,
       },
     })
   }
