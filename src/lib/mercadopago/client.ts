@@ -1,9 +1,14 @@
 import { MercadoPagoConfig, Preference } from 'mercadopago'
 
 // Initialize MercadoPago Client
-const client = new MercadoPagoConfig({ 
+// Ojo: no poner `idempotencyKey` acá. Este config es un singleton de módulo, así
+// que la key viajaría igual en TODAS las requests del proceso. Mercado Pago, ante
+// una key ya vista, devuelve el recurso original en vez de crear uno nuevo: la
+// segunda reserva recibiría la preferencia de la primera, con su monto y su
+// external_reference. La key va por request, en `createPaymentPreference`.
+const client = new MercadoPagoConfig({
   accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN || 'TEST-dummy-token',
-  options: { timeout: 5000, idempotencyKey: 'abc' }
+  options: { timeout: 5000 }
 })
 
 export interface CreatePreferenceParams {
@@ -54,7 +59,12 @@ export async function createPaymentPreference({ title, price, bookingId, courtId
           ],
           installments: 1
         }
-      }
+      },
+      // Una reserva = una preferencia. Si el usuario reintenta el checkout de la
+      // misma reserva, Mercado Pago devuelve la preferencia que ya existe en vez
+      // de cobrar dos veces; reservas distintas tienen bookingId distinto y por
+      // lo tanto no se pisan entre sí.
+      requestOptions: { idempotencyKey: `preference:${bookingId}` }
     })
 
     return {
