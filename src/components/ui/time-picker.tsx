@@ -66,7 +66,7 @@ export function TimePicker({ value, onChange, placeholder = "Horario", className
               <Button
                 variant={!value || value === "any" ? "secondary" : "outline"}
                 size="sm"
-                className="justify-start font-normal"
+                className="min-h-11 sm:min-h-0 justify-start font-normal"
                 onClick={() => handleSelect("any")}
               >
                 Cualquiera
@@ -74,7 +74,7 @@ export function TimePicker({ value, onChange, placeholder = "Horario", className
               <Button
                 variant={value === "morning" ? "secondary" : "outline"}
                 size="sm"
-                className="justify-start font-normal"
+                className="min-h-11 sm:min-h-0 justify-start font-normal"
                 onClick={() => handleSelect("morning")}
               >
                 Mañana (8-13h)
@@ -82,7 +82,7 @@ export function TimePicker({ value, onChange, placeholder = "Horario", className
               <Button
                 variant={value === "afternoon" ? "secondary" : "outline"}
                 size="sm"
-                className="justify-start font-normal"
+                className="min-h-11 sm:min-h-0 justify-start font-normal"
                 onClick={() => handleSelect("afternoon")}
               >
                 Tarde (13-18h)
@@ -90,7 +90,7 @@ export function TimePicker({ value, onChange, placeholder = "Horario", className
               <Button
                 variant={value === "evening" ? "secondary" : "outline"}
                 size="sm"
-                className="justify-start font-normal"
+                className="min-h-11 sm:min-h-0 justify-start font-normal"
                 onClick={() => handleSelect("evening")}
               >
                 Noche (18-00h)
@@ -109,7 +109,7 @@ export function TimePicker({ value, onChange, placeholder = "Horario", className
                   key={time}
                   variant={value === time ? "secondary" : "ghost"}
                   size="sm"
-                  className="text-xs font-normal"
+                  className="min-h-11 sm:min-h-0 text-xs font-normal"
                   onClick={() => handleSelect(time)}
                 >
                   {time}

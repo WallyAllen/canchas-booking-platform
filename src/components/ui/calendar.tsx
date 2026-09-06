@@ -31,7 +31,12 @@ function Calendar({
     <DayPicker
       showOutsideDays={showOutsideDays}
       className={cn(
-        "group/calendar bg-background p-2 [--cell-radius:var(--radius-md)] [--cell-size:--spacing(7)] in-data-[slot=card-content]:bg-transparent in-data-[slot=popover-content]:bg-transparent",
+        // Celdas de 44px en móvil y 28px de ahí para arriba. Elegir un día es
+        // el gesto táctil central de la reserva y 28px es incómodo con el dedo
+        // (44px es la guía de plataforma; el mínimo de WCAG 2.2 AA es 24px, que
+        // ya se cumplía). En escritorio se apunta con el mouse, así que se
+        // mantiene la densidad original.
+        "group/calendar bg-background p-2 [--cell-radius:var(--radius-md)] [--cell-size:--spacing(11)] sm:[--cell-size:--spacing(7)] in-data-[slot=card-content]:bg-transparent in-data-[slot=popover-content]:bg-transparent",
         String.raw`rtl:**:[.rdp-button\_next>svg]:rotate-180`,
         String.raw`rtl:**:[.rdp-button\_previous>svg]:rotate-180`,
         className
