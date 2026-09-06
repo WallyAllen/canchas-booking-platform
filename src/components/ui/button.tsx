@@ -44,11 +44,18 @@ const buttonVariants = cva(
 const Button = React.forwardRef<
   HTMLButtonElement,
   ButtonPrimitive.Props & VariantProps<typeof buttonVariants>
->(({ className, variant = "default", size = "default", ...props }, ref) => {
+>(({ className, variant = "default", size = "default", render, nativeButton, ...props }, ref) => {
   return (
     <ButtonPrimitive
       ref={ref}
       data-slot="button"
+      render={render}
+      // Base UI escupe un error de consola si `nativeButton` queda en true pero
+      // el `render` no produce un <button>. En esta app el patrón habitual es
+      // `render={<Link/>}`, que da un <a>: de ahí venía el error
+      // "expected a native <button>" en todas las pantallas. Si hay `render`, se
+      // asume que no es un button nativo, salvo que el llamador diga lo contrario.
+      nativeButton={nativeButton ?? render === undefined}
       className={cn(buttonVariants({ variant, size, className }))}
       {...props}
     />
