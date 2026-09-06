@@ -53,3 +53,6 @@ scratch/
 scrape-test/
 fix_stats.py
 
+
+# Logs de sesiones del MCP de Playwright
+.playwright-mcp/
