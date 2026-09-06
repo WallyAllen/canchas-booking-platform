@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import {
   sendBookingConfirmation,
@@ -28,30 +27,38 @@ type EventType = 'booking_confirmed' | 'booking_reminder' | 'booking_cancelled' 
  * puede tumbar la confirmación de una reserva. Quien la llame decide si esperarla
  * (`await`) o delegarla a la plataforma (`waitUntil`).
  */
-export async function notify(event: EventType, data: any) {
+export async function notify(
+  event: EventType,
+  data: {
+    user?: import("@/types/domain").Profile & { email?: string; phone?: string | null };
+    booking?: import("@/types/domain").Booking;
+    venue?: import("@/types/domain").Venue;
+    creditAmount?: number;
+  }
+) {
   try {
     switch (event) {
       case 'welcome':
-        await sendWelcomeEmail(data.user)
+        await sendWelcomeEmail(data.user!)
         break
 
       case 'booking_confirmed':
         await Promise.allSettled([
-          sendBookingConfirmation(data.booking, data.user, data.venue),
-          sendWhatsAppBookingConfirmation(data.user.phone, data.booking, data.venue)
+          sendBookingConfirmation(data.booking!, data.user!, data.venue!),
+          sendWhatsAppBookingConfirmation(data.user!.phone!, data.booking!, data.venue!)
         ])
         break
 
       case 'booking_reminder':
         await Promise.allSettled([
-          sendBookingReminder(data.booking, data.user, data.venue),
-          sendWhatsAppReminder(data.user.phone, data.booking, data.venue)
+          sendBookingReminder(data.booking!, data.user!, data.venue!),
+          sendWhatsAppReminder(data.user!.phone!, data.booking!, data.venue!)
         ])
         break
 
       case 'booking_cancelled':
         // Solo mandamos mail para cancelaciones
-        await sendBookingCancellation(data.booking, data.user, data.venue, data.creditAmount)
+        await sendBookingCancellation(data.booking!, data.user!, data.venue!, data.creditAmount)
         break
     }
   } catch (error) {

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createClient } from "@/lib/supabase/server"
 import Image from "next/image"
 import { redirect } from "next/navigation"
@@ -13,22 +12,22 @@ export default async function ReviewsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect("/login")
 
-  const { data: venues } = await (supabase.from("venues") as any)
+  const { data: venues } = await (supabase.from("venues"))
     .select("id")
     .eq("owner_id", user.id)
 
   const venue = venues?.[0]
   if (!venue) redirect("/dashboard")
 
-  const { data: reviewsData } = await (supabase.from("reviews") as any)
-    .select("*, profiles(full_name, avatar_url)")
+  const { data: reviewsData } = await (supabase.from("reviews"))
+    .select("*, profiles(id, full_name, avatar_url)")
     .eq("venue_id", venue.id)
     .order("created_at", { ascending: false })
 
   const reviews = reviewsData || []
 
   const averageRating = reviews.length > 0 
-    ? (reviews.reduce((acc: number, r: any) => acc + r.rating, 0) / reviews.length).toFixed(1)
+    ? (reviews.reduce((acc: number, r: import("@/types/domain").ReviewWithDetails) => acc + r.rating, 0) / reviews.length).toFixed(1)
     : 0
 
   return (
@@ -61,7 +60,7 @@ export default async function ReviewsPage() {
       </div>
 
       <div className="space-y-4">
-        {reviews.length > 0 ? reviews.map((review: any) => (
+        {reviews.length > 0 ? reviews.map((review: import("@/types/domain").ReviewWithDetails) => (
           <Card key={review.id}>
             <CardContent className="p-6">
               <div className="flex justify-between items-start mb-4">
@@ -85,11 +84,11 @@ export default async function ReviewsPage() {
                   {review.rating}
                 </div>
               </div>
-              
+
               {review.comment && (
                 <p className="text-sm mb-4">{review.comment}</p>
               )}
-              
+
               <div className="pt-4 border-t border-border/50 flex justify-end">
                 <Button variant="outline" size="sm">
                   <MessageCircle className="h-4 w-4 mr-2" />

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
@@ -12,7 +11,7 @@ export default async function AdminModerationPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect("/login")
 
-  const { data: reviews } = await (supabase.from("reviews") as any)
+  const { data: reviews } = await (supabase.from("reviews"))
     .select("*, profiles(full_name), venues(name)")
     .order("created_at", { ascending: false })
 
@@ -28,7 +27,7 @@ export default async function AdminModerationPage() {
       </div>
 
       <div className="space-y-4">
-        {reviewsList.map((review: any) => (
+        {reviewsList.map((review: import("@/types/domain").Review & { profiles: { full_name: string | null } | null, venues: { name: string } | null }) => (
           <Card key={review.id}>
             <CardContent className="p-6 flex flex-col md:flex-row gap-6">
               <div className="flex-1">
@@ -47,7 +46,7 @@ export default async function AdminModerationPage() {
                   ID: {review.id} • {new Date(review.created_at).toLocaleString('es-AR')}
                 </div>
               </div>
-              
+
               <div className="flex items-start gap-2 border-t pt-4 md:border-t-0 md:pt-0 md:border-l md:pl-6">
                 <Button variant="outline" size="sm" className="text-green-600 hover:text-green-700 hover:bg-green-50">
                   <CheckCircle className="h-4 w-4 mr-2" /> Aprobar

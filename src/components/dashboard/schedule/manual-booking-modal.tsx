@@ -9,7 +9,7 @@ import { createManualBooking } from "@/app/dashboard/schedule/actions"
 interface Court {
   id: string
   name: string
-  court_type: string
+  type: string
 }
 
 export function ManualBookingModal({ courts, currentDate }: { courts: Court[], currentDate: string }) {
@@ -24,8 +24,7 @@ export function ManualBookingModal({ courts, currentDate }: { courts: Court[], c
       await createManualBooking(new FormData(e.currentTarget))
       setOpen(false)
     } catch (error: unknown) {
-      // @ts-expect-error fix inference
-      alert("Error: " + error instanceof Error ? error.message : "Desconocido")
+      alert("Error: " + (error instanceof Error ? error.message : "Desconocido"))
     } finally {
       setLoading(false)
     }
@@ -51,7 +50,7 @@ export function ManualBookingModal({ courts, currentDate }: { courts: Court[], c
               ))}
             </select>
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium leading-none">Fecha</label>

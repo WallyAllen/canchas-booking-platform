@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { Button } from "@/components/ui/button"
@@ -22,11 +21,11 @@ export default async function MockPaymentPage({
   async function approvePayment() {
     "use server"
     const supabase = await createClient()
-    
-    await (supabase.from("bookings") as any)
+
+    await (supabase.from("bookings"))
       .update({ status: 'confirmed', payment_status: 'paid' })
       .eq('id', booking_id as string)
-      
+
     redirect(`/booking/${court_id}/success?booking_id=${booking_id}`)
   }
 
@@ -48,7 +47,7 @@ export default async function MockPaymentPage({
             <p className="text-sm text-muted-foreground mb-1">Monto a pagar</p>
             <p className="text-4xl font-bold">${price}</p>
           </div>
-          
+
           <div className="bg-blue-500/10 text-blue-600 p-4 rounded-xl text-sm">
             Estás viendo esta pantalla porque no hay credenciales válidas de Mercado Pago configuradas. Úsala para probar el flujo.
           </div>
@@ -60,7 +59,7 @@ export default async function MockPaymentPage({
                 Simular Pago Aprobado
               </Button>
             </form>
-            
+
             <form action={rejectPayment}>
               <Button type="submit" variant="outline" className="w-full h-12 border-red-200 text-red-500 hover:bg-red-50">
                 <XCircle className="w-5 h-5 mr-2" />

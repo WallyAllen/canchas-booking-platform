@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -16,14 +15,14 @@ export default async function CourtsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect("/login")
 
-  const { data: venues } = await (supabase.from("venues") as any)
+  const { data: venues } = await (supabase.from("venues"))
     .select("id")
     .eq("owner_id", user.id)
 
   const venue = venues?.[0]
   if (!venue) redirect("/dashboard")
 
-  const { data: courts } = await (supabase.from("courts") as any)
+  const { data: courts } = await (supabase.from("courts"))
     .select("*, pricing_rules(price)")
     .eq("venue_id", venue.id)
     .order("created_at", { ascending: true })
@@ -39,9 +38,9 @@ export default async function CourtsPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {courts && courts.length > 0 ? courts.map((court: any) => {
+        {courts && courts.length > 0 ? courts.map((court: import("@/types/domain").Court & { pricing_rules: { price: number }[] }) => {
           const basePrice = court.pricing_rules?.[0]?.price || 15000
-          
+
           return (
           <Card key={court.id}>
             <CardHeader className="pb-3">
@@ -56,14 +55,14 @@ export default async function CourtsPage() {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div className="text-muted-foreground">Tipo</div>
-                  <div className="font-medium capitalize">{court.court_type}</div>
-                  
+                  <div className="font-medium capitalize">{court.type}</div>
+
                   <div className="text-muted-foreground">Superficie</div>
                   <div className="font-medium capitalize">{court.surface}</div>
-                  
+
                   <div className="text-muted-foreground">Techada</div>
-                  <div className="font-medium">{court.is_indoor ? "Sí" : "No"}</div>
-                  
+                  <div className="font-medium">{court.is_covered ? "Sí" : "No"}</div>
+
                   <div className="text-muted-foreground">Turno base</div>
                   <div className="font-medium">{court.slot_duration_minutes} min</div>
                 </div>

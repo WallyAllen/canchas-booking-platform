@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { Card,} from "@/components/ui/card"
@@ -17,7 +17,7 @@ export default async function SchedulePage({
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect("/login")
 
-  const { data: venues } = await (supabase.from("venues") as any)
+  const { data: venues } = await supabase.from("venues")
     .select("*, courts(*)")
     .eq("owner_id", user.id)
 
@@ -28,13 +28,13 @@ export default async function SchedulePage({
   const currentDate = searchParams.date || todayStr
 
   // Fetch bookings for that date
-  const { data: bookingsData } = await (supabase.from("bookings") as any)
+  const { data: bookingsData } = await supabase.from("bookings")
     .select("*, courts(name), profiles(full_name)")
-    .in("court_id", venue.courts.map((c: any) => c.id))
+    .in("court_id", venue.courts.map((c) => c.id))
     .eq("booking_date", currentDate)
 
   const bookings = bookingsData || []
-  
+
   // Horarios para mostrar (MVP: 16:00 a 23:00)
   const hours = [16, 17, 18, 19, 20, 21, 22, 23]
 
@@ -70,23 +70,23 @@ export default async function SchedulePage({
 
             {/* Filas / Canchas */}
             <div className="divide-y">
-              {venue.courts.map((court: any) => {
-                const courtBookings = bookings.filter((b: any) => b.court_id === court.id)
-                
+              {venue.courts.map((court) => {
+                const courtBookings = bookings.filter((b) => b.court_id === court.id)
+
                 return (
                   <div key={court.id} className="grid grid-cols-[150px_1fr] bg-card">
                     <div className="p-4 font-medium border-r flex flex-col justify-center">
                       <span className="truncate">{court.name}</span>
-                      <span className="text-xs text-muted-foreground capitalize">{court.court_type}</span>
+                      <span className="text-xs text-muted-foreground capitalize">{court.type}</span>
                     </div>
                     <div className="grid relative" style={{ gridTemplateColumns: `repeat(${hours.length}, minmax(0, 1fr))` }}>
                       {/* Celdas de fondo */}
                       {hours.map(hour => (
                         <div key={hour} className="h-full min-h-[80px] border-r last:border-r-0 border-dashed hover:bg-muted/30 transition-colors cursor-pointer" />
                       ))}
-                      
+
                       {/* Bloques de reservas */}
-                      {courtBookings.map((booking: any) => {
+                      {courtBookings.map((booking) => {
                         const startHour = parseInt(booking.start_time.split(':')[0])
                         const index = hours.indexOf(startHour)
                         if (index === -1) return null // Fuera de horario

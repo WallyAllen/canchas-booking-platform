@@ -29,7 +29,7 @@ export async function updateBookingStatus(bookingId: string, status: 'confirmed'
   await assertOwnsBooking(supabase, bookingId, user.id)
 
   const { error } = await supabase.from("bookings")
-    .update({ status: status } as never)
+    .update({ status: status })
     .eq("id", bookingId)
 
   if (error) {
@@ -48,7 +48,7 @@ export async function updatePaymentStatus(bookingId: string, paymentStatus: 'pen
   await assertOwnsBooking(supabase, bookingId, user.id)
 
   const { error } = await supabase.from("bookings")
-    .update({ payment_status: paymentStatus } as never)
+    .update({ payment_status: paymentStatus })
     .eq("id", bookingId)
 
   if (error) {
@@ -74,7 +74,7 @@ export async function confirmTransferPayment(bookingId: string) {
   await assertOwnsBooking(supabase, bookingId, user.id)
 
   const { error } = await supabase.from("bookings")
-    .update({ payment_status: 'paid', status: 'confirmed' } as never)
+    .update({ payment_status: 'paid', status: 'confirmed' })
     .eq("id", bookingId)
 
   if (error) {
@@ -101,7 +101,7 @@ export async function rejectTransferPayment(bookingId: string) {
   await assertOwnsBooking(supabase, bookingId, user.id)
 
   const { error } = await supabase.from("bookings")
-    .update({ status: 'cancelled', payment_status: 'pending', cancelled_at: new Date().toISOString() } as never)
+    .update({ status: 'cancelled', payment_status: 'pending', cancelled_at: new Date().toISOString() })
     .eq("id", bookingId)
 
   if (error) {

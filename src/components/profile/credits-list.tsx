@@ -1,16 +1,18 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client"
 
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Wallet, Clock } from "lucide-react"
+import { Wallet} from "lucide-react"
+
+type CreditWithDetails = import("@/types/domain").Credit & {
+  bookings: { courts: { name: string; venues: { name: string } | null } | null } | null
+}
 
 export function CreditsList({ userId }: { userId: string }) {
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [credits, setCredits] = useState<any[]>([])
+  const [credits, setCredits] = useState<CreditWithDetails[]>([])
   const [availableCredits, setAvailableCredits] = useState(0)
   const supabase = createClient()
 
@@ -22,10 +24,11 @@ export function CreditsList({ userId }: { userId: string }) {
         .order("created_at", { ascending: false })
 
       if (data) {
-        setCredits(data)
-        const total = data
-          .filter((c: import("@/types/domain").Credit) => c.status === 'available')
-          .reduce((acc: number, curr: import("@/types/domain").Credit) => acc + curr.amount, 0)
+        const typedData = data as unknown as CreditWithDetails[]
+        setCredits(typedData)
+        const total = typedData
+          .filter((c) => c.status === 'available')
+          .reduce((acc, curr) => acc + curr.amount, 0)
         setAvailableCredits(total)
       }
     }
@@ -52,9 +55,7 @@ export function CreditsList({ userId }: { userId: string }) {
         <div className="space-y-4 mt-6 max-h-[400px] overflow-y-auto pr-2">
           {credits.length > 0 ? (
             Object.entries(
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              credits.reduce((acc: any, credit: import("@/types/domain").Credit) => {
-                // @ts-expect-error fix inference
+              credits.reduce((acc: Record<string, { available: number, list: CreditWithDetails[] }>, credit) => {
                 const venueName = credit.bookings?.courts?.venues?.name || "Complejo Desconocido"
                 if (!acc[venueName]) acc[venueName] = { available: 0, list: [] }
                 if (credit.status === 'available') {
@@ -63,15 +64,14 @@ export function CreditsList({ userId }: { userId: string }) {
                 acc[venueName].list.push(credit)
                 return acc
               }, {})
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            ).map(([venueName, data]: any) => (
+            ).map(([venueName, data]) => (
               <div key={venueName} className="border rounded-lg p-4 bg-background">
                 <div className="flex justify-between items-center mb-3 border-b pb-2">
                   <h4 className="font-semibold">{venueName}</h4>
                   <span className="font-bold text-green-600">${data.available.toLocaleString('es-AR')}</span>
                 </div>
                 <div className="space-y-2">
-                  {data.list.map((credit: import("@/types/domain").Credit) => {
+                  {data.list.map((credit) => {
                     const isAvailable = credit.status === 'available'
                     const isUsed = credit.status === 'used'
 

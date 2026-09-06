@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 // WhatsApp API Integration using Meta Cloud API
 // In production, requires WHATSAPP_TOKEN and WHATSAPP_PHONE_NUMBER_ID
@@ -7,7 +6,7 @@ const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN
 const WHATSAPP_PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID
 const API_URL = `https://graph.facebook.com/v17.0/${WHATSAPP_PHONE_NUMBER_ID}/messages`
 
-export async function sendWhatsAppBookingConfirmation(phone: string, booking: any, venue: any) {
+export async function sendWhatsAppBookingConfirmation(phone: string, booking: import("@/types/domain").Booking, venue: import("@/types/domain").Venue) {
   if (!phone || !WHATSAPP_TOKEN || !WHATSAPP_PHONE_NUMBER_ID) {
     console.log('Skipping WhatsApp confirmation (missing phone or env vars)')
     return
@@ -55,7 +54,7 @@ export async function sendWhatsAppBookingConfirmation(phone: string, booking: an
   }
 }
 
-export async function sendWhatsAppReminder(phone: string, booking: any, venue: any) {
+export async function sendWhatsAppReminder(phone: string, booking: import("@/types/domain").Booking, venue: import("@/types/domain").Venue) {
   if (!phone || !WHATSAPP_TOKEN || !WHATSAPP_PHONE_NUMBER_ID) {
     console.log('Skipping WhatsApp reminder (missing phone or env vars)')
     return

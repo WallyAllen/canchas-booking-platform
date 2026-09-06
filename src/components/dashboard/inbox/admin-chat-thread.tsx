@@ -9,13 +9,7 @@ import { createClient } from "@/lib/supabase/client"
 import { sendMessage, markConversationAsRead } from "@/app/actions/chat"
 import { Button } from "@/components/ui/button"
 
-interface Message {
-  id: string
-  sender_id: string
-  content: string
-  created_at: string
-  image_url?: string | null
-}
+type Message = import("@/types/domain").Message
 
 interface AdminChatThreadProps {
   conversation: (Record<string, unknown> & { id: string; user_id?: string; unread_user_count?: number; created_at?: string; profiles?: { avatar_url?: string; full_name?: string } }) | undefined
@@ -60,8 +54,7 @@ export function AdminChatThread({ conversation, venueId, _onBack }: AdminChatThr
         .single()
 
       if (data) {
-        // @ts-expect-error fix inference
-        setLatestBooking(data as unknown)
+        setLatestBooking(data as unknown as { id: string, booking_date: string, start_time: string, courts: { name: string } | null })
       }
     }
 
@@ -103,8 +96,7 @@ export function AdminChatThread({ conversation, venueId, _onBack }: AdminChatThr
       )
       .on('postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'conversations', filter: `id=eq.${conversation?.id}` },
-        (payload: unknown) => {
-          // @ts-expect-error fix inference
+        (payload: { new: { unread_user_count: number } }) => {
           setUnreadUserCount(payload.new.unread_user_count)
         }
       )
@@ -167,8 +159,7 @@ export function AdminChatThread({ conversation, venueId, _onBack }: AdminChatThr
       // Bucket privado (030): se guarda el path; la firma se genera al renderizar.
       await sendMessage(conversation.id, '🖼️ Imagen adjunta', fileName)
     } catch (err: unknown) {
-      // @ts-expect-error fix inference
-      alert("Error al subir imagen: " + (err.message || "Desconocido"))
+      alert("Error al subir imagen: " + (err instanceof Error ? err.message : String(err)))
       console.error(err)
     } finally {
       setIsUploading(false)
@@ -191,8 +182,7 @@ export function AdminChatThread({ conversation, venueId, _onBack }: AdminChatThr
       await sendMessage(conversation.id, text)
       setInputValue("")
     } catch (err: unknown) {
-      // @ts-expect-error fix inference
-      alert("Error al enviar: " + (err.message || "Desconocido"))
+      alert("Error al enviar: " + (err instanceof Error ? err.message : String(err)))
       console.error(err)
     } finally {
       setIsSending(false)
@@ -226,8 +216,7 @@ export function AdminChatThread({ conversation, venueId, _onBack }: AdminChatThr
           )}
         </div>
       </div>
-      {/* @ts-expect-error fix inference */}
-      <AdminMessageList messages={messages} />
+      <AdminMessageList messages={messages as unknown as Parameters<typeof AdminMessageList>[0]['messages']} />
       <AdminInputBar 
         onSendMessage={async (_msg) => {}}
         disabled={conversation?.status !== 'open'}

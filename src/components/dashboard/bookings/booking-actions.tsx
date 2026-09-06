@@ -25,10 +25,9 @@ export function BookingActions({ bookingId, status, paymentStatus }: { bookingId
     }
   }
 
-  const handleStatusChange = async (newStatus: unknown) => {
+  const handleStatusChange = async (newStatus: Parameters<typeof updateBookingStatus>[1]) => {
     setLoading(true)
     try {
-      // @ts-expect-error fix inference
       await updateBookingStatus(bookingId, newStatus)
     } catch (error: unknown) {
       alert("Error: " + (error instanceof Error ? error.message : "Desconocido"))
@@ -37,10 +36,9 @@ export function BookingActions({ bookingId, status, paymentStatus }: { bookingId
     }
   }
 
-  const handlePaymentChange = async (newStatus: unknown) => {
+  const handlePaymentChange = async (newStatus: Parameters<typeof updatePaymentStatus>[1]) => {
     setLoading(true)
     try {
-      // @ts-expect-error fix inference
       await updatePaymentStatus(bookingId, newStatus)
     } catch (error: unknown) {
       alert("Error: " + (error instanceof Error ? error.message : "Desconocido"))

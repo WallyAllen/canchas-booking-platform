@@ -48,16 +48,14 @@ export async function updateVenueProfile(formData: FormData) {
     throw new Error("No autorizado")
   }
 
-  const payload: Record<string, string | null> = { name, phone, description, address, city }
+  const payload: import("@/types/database").Database["public"]["Tables"]["venues"]["Update"] = { name, phone, description, address, city }
   if (latitude !== null && longitude !== null) {
-    // @ts-expect-error fix inference
     payload.latitude = latitude
-    // @ts-expect-error fix inference
     payload.longitude = longitude
   }
 
   const { error } = await supabase.from("venues")
-    .update(payload as never)
+    .update(payload)
     .eq("id", venueId)
 
   if (error) {
@@ -90,7 +88,7 @@ export async function updateVenuePaymentSettings(formData: FormData) {
   }
 
   const { error } = await supabase.from("venues")
-    .update({ require_deposit, deposit_percentage } as never)
+    .update({ require_deposit, deposit_percentage })
     .eq("id", venueId)
 
   if (error) {
@@ -140,7 +138,7 @@ export async function updateVenueTransferDetails(formData: FormData) {
       cbu: cbu || null,
       holder_name: holder_name || null,
       bank_name: bank_name || null
-    } as never, { onConflict: "venue_id" })
+    }, { onConflict: "venue_id" })
 
   if (error) {
     console.error("updateVenueTransferDetails error:", error)

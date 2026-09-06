@@ -86,7 +86,7 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
       initChat()
       return () => { isMounted = false }
     }
-    
+
     // Reset fetch state when modal closes
     if (!isOpen) {
       hasFetched.current = false;
@@ -107,23 +107,22 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
         .select("*")
         .eq("conversation_id", conversationId)
         .order("created_at", { ascending: true })
-      
+
       if (data) setMessages(data)
-      
+
       // Load conversation unread count
-      // @ts-expect-error fix inference
-      const { data: conv } = await (supabase
-        .from("conversations") as unknown)
+      const { data: conv } = await supabase
+        .from("conversations")
         .select("unread_venue_count")
         .eq("id", conversationId)
         .single()
-      
+
       if (conv) setUnreadVenueCount(conv.unread_venue_count)
-      
+
       // Mark as read
       await markConversationAsRead(conversationId, 'user')
     }
-    
+
     loadMessages()
 
     const channel = supabase
@@ -142,9 +141,11 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
       )
       .on('postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'conversations', filter: `id=eq.${conversationId}` },
-        (payload: unknown) => {
-          // @ts-expect-error fix inference
-          setUnreadVenueCount(payload.new.unread_venue_count)
+        (payload: { new: { unread_venue_count: number } } | unknown) => {
+          if (payload && typeof payload === 'object' && 'new' in payload) {
+            const typedPayload = payload as { new: { unread_venue_count: number } }
+            setUnreadVenueCount(typedPayload.new.unread_venue_count)
+          }
         }
       )
       .on('broadcast', { event: 'typing' }, (payload) => {
@@ -168,17 +169,17 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
 
   const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value)
-    
+
     if (!conversationId) return
-    
+
     supabase.channel(`chat_${conversationId}`).send({
       type: 'broadcast',
       event: 'typing',
       payload: { isTyping: true, senderType: 'user' }
     })
-    
+
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
-    
+
     typingTimeoutRef.current = setTimeout(() => {
       supabase.channel(`chat_${conversationId}`).send({
         type: 'broadcast',
@@ -195,12 +196,12 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file || !conversationId) return
-    
+
     setIsUploading(true)
     try {
       const fileExt = file.name.split('.').pop()
       const fileName = `${conversationId}/${Date.now()}.${fileExt}`
-      
+
       const { error } = await supabase.storage
         .from('chat-images')
         .upload(fileName, file)
@@ -211,8 +212,7 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
       // genera al renderizar, en <ChatImage />.
       await sendMessage(conversationId, '🖼️ Imagen adjunta', fileName)
     } catch (e: unknown) {
-      // @ts-expect-error fix inference
-      alert("Error al subir imagen: " + (e.message || "Desconocido"))
+      alert("Error al subir imagen: " + (e instanceof Error ? e.message : String(e)))
       console.error(e)
     } finally {
       setIsUploading(false)
@@ -223,20 +223,19 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
   const handleSend = async (e: React.FormEvent | React.MouseEvent) => {
     e.preventDefault()
     if (!inputValue || !inputValue.trim() || isSending) return
-    
+
     if (!conversationId) {
       alert("La conversación aún no está inicializada. Por favor, recarga o vuelve a abrir el chat.")
       return
     }
-    
+
     setIsSending(true)
     const text = inputValue.trim()
     try {
       await sendMessage(conversationId, text)
       setInputValue("") // clear only on success
     } catch (e: unknown) {
-      // @ts-expect-error fix inference
-      alert("Error al enviar: " + (e.message || "Desconocido"))
+      alert("Error al enviar: " + (e instanceof Error ? e.message : String(e)))
       console.error(e)
     } finally {
       setIsSending(false)
@@ -249,7 +248,7 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
         <MessageCircle className="h-5 w-5" />
         Consultar a la cancha
       </DialogTrigger>
-      
+
       <DialogContent className="sm:max-w-md h-[80vh] sm:h-[600px] flex flex-col p-0 overflow-hidden">
         <DialogHeader className="p-4 border-b border-border/50 bg-muted/20 shrink-0">
           <DialogTitle className="flex items-center gap-3 text-lg">
@@ -259,7 +258,7 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
             Chat con {venueName}
           </DialogTitle>
         </DialogHeader>
-        
+
         {!userId ? (
           <div className="flex-1 flex items-center justify-center p-6 text-center text-muted-foreground">
             Inicia sesión para enviar mensajes a la cancha.
@@ -281,11 +280,11 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
                   const isMe = msg.sender_id === userId
                   const isLastMessage = index === messages.length - 1
                   const isRead = isMe && unreadVenueCount === 0 && isLastMessage
-                  
+
                   const msgDate = new Date(msg.created_at)
                   const prevMsgDate = index > 0 ? new Date(messages[index - 1].created_at) : null
                   const showDate = !prevMsgDate || msgDate.toDateString() !== prevMsgDate.toDateString()
-                  
+
                   return (
                     <div key={msg.id}>
                       {showDate && (
@@ -303,7 +302,7 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
                             </AvatarFallback>
                           </Avatar>
                         )}
-                        
+
                         <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                           <div className={`px-4 py-2 rounded-2xl ${isMe ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-muted rounded-bl-sm'}`}>
                             {msg.image_url && <ChatImage source={msg.image_url} />}
@@ -336,7 +335,7 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
                 </div>
               )}
             </div>
-            
+
             <form onSubmit={handleSend} className="p-3 border-t border-border/50 bg-muted/10 shrink-0 flex gap-2 items-center">
               <input 
                 type="file" 
@@ -355,7 +354,7 @@ export function PlayerChatModal({ venueId, venueName }: PlayerChatModalProps) {
               >
                 <Paperclip className="h-5 w-5" />
               </Button>
-              
+
               <Input
                 name="message"
                 value={inputValue}

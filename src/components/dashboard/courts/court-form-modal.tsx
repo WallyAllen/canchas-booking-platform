@@ -17,8 +17,7 @@ export function CourtFormModal() {
       await createCourt(new FormData(e.currentTarget))
       setOpen(false)
     } catch (error: unknown) {
-      // @ts-expect-error fix inference
-      alert("Error: " + error instanceof Error ? error.message : "Desconocido")
+      alert("Error: " + (error instanceof Error ? error.message : "Desconocido"))
     } finally {
       setLoading(false)
     }

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -12,17 +11,17 @@ export default async function AdminDashboardPage() {
   if (!user) redirect("/login")
 
   // Fetch all counts
-  const { count: usersCount } = await (supabase.from("profiles") as any).select("*", { count: 'exact', head: true })
-  const { count: venuesCount } = await (supabase.from("venues") as any).select("*", { count: 'exact', head: true })
-  
-  const { data: bookings } = await (supabase.from("bookings") as any)
+  const { count: usersCount } = await (supabase.from("profiles")).select("*", { count: 'exact', head: true })
+  const { count: venuesCount } = await (supabase.from("venues")).select("*", { count: 'exact', head: true })
+
+  const { data: bookings } = await (supabase.from("bookings"))
     .select("*, profiles(full_name), courts(name, venues(name))")
     .order("created_at", { ascending: false })
 
   const bookingsList = bookings || []
   const totalRevenue = bookingsList
-    .filter((b: any) => b.status === 'confirmed' || b.payment_status === 'paid')
-    .reduce((acc: number, curr: any) => acc + (curr.total_price * 0.3), 0)
+    .filter((b) => b.status === 'confirmed' || b.payment_status === 'paid')
+    .reduce((acc, curr) => acc + (curr.total_price * 0.3), 0)
 
   const recentBookings = bookingsList.slice(0, 10)
 
@@ -91,7 +90,7 @@ export default async function AdminDashboardPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/50">
-                  {recentBookings.map((b: any) => (
+                  {recentBookings.map((b: import("@/types/domain").Booking & { courts: { name: string, venues: { name: string } | null } | null, profiles: { full_name: string | null } | null }) => (
                     <tr key={b.id} className="hover:bg-muted/30">
                       <td className="px-4 py-3 font-mono text-xs">{b.id.substring(0, 8)}</td>
                       <td className="px-4 py-3">{new Date(`${b.booking_date}T${b.start_time}`).toLocaleString('es-AR')}</td>

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
@@ -14,7 +13,7 @@ export default async function BookingSuccessPage({
   searchParams: { booking_id?: string; payment_id?: string; status?: string }
 }) {
   const { booking_id } = searchParams
-  
+
   if (!booking_id) {
     redirect("/search")
   }
@@ -23,7 +22,7 @@ export default async function BookingSuccessPage({
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect("/login")
 
-  const { data: booking, error } = await (supabase.from("bookings") as any)
+  const { data: booking, error } = await (supabase.from("bookings"))
     .select(`
       *,
       courts (
@@ -62,7 +61,7 @@ export default async function BookingSuccessPage({
           <h1 className="text-2xl font-black text-green-500 mb-2">¡Reserva Confirmada!</h1>
           <p className="text-muted-foreground">Tu pago ha sido procesado exitosamente y la cancha ya es tuya.</p>
         </div>
-        
+
         <CardContent className="p-6 md:p-8 space-y-6">
           <div className="space-y-4 bg-muted/20 p-6 rounded-xl border border-border/50">
             <div className="flex items-start gap-3">

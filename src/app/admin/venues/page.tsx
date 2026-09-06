@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
@@ -12,7 +11,7 @@ export default async function AdminVenuesPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect("/login")
 
-  const { data: venues } = await (supabase.from("venues") as any)
+  const { data: venues } = await (supabase.from("venues"))
     .select("*, profiles!venues_owner_id_fkey(full_name, email)")
     .order("created_at", { ascending: false })
 
@@ -42,7 +41,7 @@ export default async function AdminVenuesPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/50">
-                {venuesList.map((venue: any) => (
+                {venuesList.map((venue: import("@/types/domain").Venue & { profiles: { full_name: string | null, email: string } | null }) => (
                   <tr key={venue.id} className="hover:bg-muted/30">
                     <td className="px-6 py-4">
                       <div className="font-bold">{venue.name}</div>

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { MetricCard } from "@/components/dashboard/metric-card"
@@ -15,7 +14,7 @@ export default async function DashboardOverview() {
   if (!user) redirect("/login")
 
   // Obtener el venue del usuario
-  const { data: venues } = await (supabase.from("venues") as any)
+  const { data: venues } = await (supabase.from("venues"))
     .select("*, courts(*)")
     .eq("owner_id", user.id)
 
@@ -41,7 +40,7 @@ export default async function DashboardOverview() {
   }
 
   // Fetch reservas para métricas
-  const { data: bookingsData } = await (supabase.from("bookings") as any)
+  const { data: bookingsData } = await (supabase.from("bookings"))
     .select("*, courts!inner(venue_id)")
     .eq("courts.venue_id", venue.id)
     .order("created_at", { ascending: false })
@@ -50,11 +49,11 @@ export default async function DashboardOverview() {
 
   // Calcular métricas MVP (mockeadas con los datos)
   const today = new Date().toISOString().split('T')[0]
-  const todayBookings = bookings.filter((b: any) => b.booking_date === today && b.status !== 'cancelled')
-  
+  const todayBookings = bookings.filter((b: import("@/types/domain").Booking) => b.booking_date === today && b.status !== 'cancelled')
+
   const revenue = bookings
-    .filter((b: any) => b.status === 'confirmed' || b.payment_status === 'paid')
-    .reduce((acc: number, curr: any) => acc + (curr.total_price || 0), 0)
+    .filter((b: import("@/types/domain").Booking) => b.status === 'confirmed' || b.payment_status === 'paid')
+    .reduce((acc: number, curr: import("@/types/domain").Booking) => acc + (curr.total_price || 0), 0)
 
   // Últimas 5 reservas
   const recentBookings = bookings.slice(0, 5)
@@ -87,7 +86,7 @@ export default async function DashboardOverview() {
         />
         <MetricCard
           title="Canchas Activas"
-          value={venue.courts?.filter((c: any) => c.is_active).length.toString() || "0"}
+          value={venue.courts?.filter((c: import("@/types/domain").Court) => c.is_active).length.toString() || "0"}
           icon={Clock}
           description="Habilitadas para reservas online"
         />
@@ -101,7 +100,7 @@ export default async function DashboardOverview() {
           <CardContent>
             {recentBookings.length > 0 ? (
               <div className="space-y-4">
-                {recentBookings.map((b: any) => (
+                {recentBookings.map((b: import("@/types/domain").Booking) => (
                   <div key={b.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
                     <div>
                       <p className="font-medium text-sm">Reserva #{b.id.substring(0, 6).toUpperCase()}</p>

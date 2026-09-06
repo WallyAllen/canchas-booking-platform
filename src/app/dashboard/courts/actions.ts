@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 "use server"
 
@@ -21,28 +20,21 @@ async function assertOwnsCourt(
   courtId: string,
   userId: string
 ) {
-  // `src/types/database.ts` está escrito a mano y solo define `Relationships` en
-  // una tabla. La inferencia de `select()` de Supabase la necesita en todas, así
-  // que sin ella el `data` colapsa a `never` (de ahí los `@ts-expect-error` que
-  // hay repartidos por el dashboard). Acotamos la forma que la query realmente
-  // devuelve, en vez de apagar el chequeo de tipos.
   const { data: courtRow } = await supabase
     .from("courts")
     .select("venue_id")
     .eq("id", courtId)
     .single()
 
-  const venueId = (courtRow as { venue_id: string } | null)?.venue_id
-  if (!venueId) throw new Error("No autorizado")
+  if (!courtRow) throw new Error("No autorizado")
 
   const { data: venueRow } = await supabase
     .from("venues")
     .select("owner_id")
-    .eq("id", venueId)
+    .eq("id", courtRow.venue_id)
     .single()
 
-  const ownerId = (venueRow as { owner_id: string } | null)?.owner_id
-  if (ownerId !== userId) {
+  if (venueRow?.owner_id !== userId) {
     throw new Error("No autorizado")
   }
 }
@@ -52,7 +44,7 @@ export async function createCourt(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error("No autenticado")
 
-  const { data: venues } = await (supabase.from("venues") as any)
+  const { data: venues } = await (supabase.from("venues"))
     .select("id")
     .eq("owner_id", user.id)
     .single()
@@ -60,13 +52,13 @@ export async function createCourt(formData: FormData) {
   if (!venues) throw new Error("No se encontró complejo para este usuario")
 
   const name = formData.get("name") as string
-  const type = formData.get("type") as string
-  const surface = formData.get("surface") as string
+  const type = formData.get("type") as import("@/types/database").Database["public"]["Tables"]["courts"]["Row"]["type"]
+  const surface = formData.get("surface") as import("@/types/database").Database["public"]["Tables"]["courts"]["Row"]["surface"]
   const is_covered = formData.get("is_covered") === "on"
   const has_lighting = formData.get("has_lighting") === "on"
   const slot_duration_minutes = parseInt(formData.get("slot_duration_minutes") as string) || 60
 
-  const { error } = await (supabase.from("courts") as any).insert({
+  const { error } = await (supabase.from("courts")).insert({
     venue_id: venues.id,
     name,
     type,
@@ -92,7 +84,7 @@ export async function toggleCourtStatus(courtId: string, isActive: boolean) {
 
   await assertOwnsCourt(supabase, courtId, user.id)
 
-  const { error } = await (supabase.from("courts") as any)
+  const { error } = await (supabase.from("courts"))
     .update({ is_active: isActive })
     .eq("id", courtId)
 
@@ -129,7 +121,7 @@ export async function updatePricing(courtId: string, formData: FormData) {
     })
   }
 
-  const { error } = await (supabase.from("pricing_rules") as any).insert(rules)
+  const { error } = await (supabase.from("pricing_rules")).insert(rules)
 
   if (error) {
     console.error(error)
@@ -190,7 +182,7 @@ export async function saveOffers(courtId: string, formData: FormData) {
     })
   }
 
-  const { error } = await (supabase.from("pricing_rules") as any).insert(rules)
+  const { error } = await (supabase.from("pricing_rules")).insert(rules)
 
   if (error) {
     console.error(error)

@@ -1,8 +1,15 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { createClient, createAdminClient } from "@/lib/supabase/server"
+import type { Booking } from "@/types/domain"
 
-export function calculateCancellationPolicy(booking: any) {
+/**
+ * Solo las columnas que estas funciones leen. Un `Pick` en vez de `Booking`
+ * entero porque las llaman también con filas que traen joins (profiles, courts,
+ * venues) y con objetos armados en los tests: lo que importa es que tengan la
+ * fecha, la hora y el precio.
+ */
+type BookingTiming = Pick<Booking, 'booking_date' | 'start_time' | 'total_price'>
+
+export function calculateCancellationPolicy(booking: BookingTiming) {
   const now = new Date()
   const bookingDate = new Date(`${booking.booking_date}T${booking.start_time}`)
   const diffHours = (bookingDate.getTime() - now.getTime()) / (1000 * 60 * 60)
@@ -38,7 +45,7 @@ export function calculateCancellationPolicy(booking: any) {
   }
 }
 
-export function canReschedule(booking: any) {
+export function canReschedule(booking: Pick<Booking, 'booking_date' | 'start_time'>) {
   const now = new Date()
   const bookingDate = new Date(`${booking.booking_date}T${booking.start_time}`)
   const diffHours = (bookingDate.getTime() - now.getTime()) / (1000 * 60 * 60)
@@ -56,7 +63,7 @@ export async function createCredit(userId: string, bookingId: string, venueId: s
   const expiresAt = new Date()
   expiresAt.setDate(expiresAt.getDate() + 90) // 90 días de validez
 
-  const { data, error } = await (supabase.from('credits') as any)
+  const { data, error } = await supabase.from('credits')
     .insert({
       user_id: userId,
       booking_id: bookingId,
@@ -80,7 +87,7 @@ export async function getAvailableCredits(userId: string, venueId: string) {
   const supabase = await createClient()
   const now = new Date().toISOString()
 
-  const { data, error } = await (supabase.from('credits') as any)
+  const { data, error } = await supabase.from('credits')
     .select('*')
     .eq('user_id', userId)
     .eq('venue_id', venueId)
@@ -94,7 +101,7 @@ export async function getAvailableCredits(userId: string, venueId: string) {
   }
 
   const credits = data || []
-  return credits.reduce((acc: number, curr: any) => acc + curr.amount, 0)
+  return credits.reduce((acc, curr) => acc + curr.amount, 0)
 }
 
 // Bloquea créditos disponibles contra una reserva pendiente (SEC-04: antes se
@@ -195,7 +202,7 @@ export async function consumeLockedCredits(bookingId: string) {
   const supabase = createAdminClient()
   const now = new Date().toISOString()
 
-  const { error } = await (supabase.from('credits') as any)
+  const { error } = await supabase.from('credits')
     .update({ status: 'used', used_at: now })
     .eq('locked_for_booking_id', bookingId)
 

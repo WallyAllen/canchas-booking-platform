@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { createClient } from "@/lib/supabase/server"
 import { calculateCancellationPolicy, createCredit, canReschedule } from "@/lib/credits/manager"
 
@@ -10,7 +8,7 @@ export async function cancelBooking(bookingId: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error("No autenticado")
 
-  const { data: booking, error: getError } = await (supabase.from("bookings") as any)
+  const { data: booking, error: getError } = await supabase.from("bookings")
     .select("*, profiles(*), courts(*, venues(*))")
     .eq("id", bookingId)
     .eq("user_id", user.id)
@@ -26,7 +24,7 @@ export async function cancelBooking(bookingId: string) {
   }
 
   // 3. Cancelar la reserva
-  const { error: updateError } = await (supabase.from("bookings") as any)
+  const { error: updateError } = await supabase.from("bookings")
     .update({ 
       status: 'cancelled',
       cancelled_at: new Date().toISOString() 
@@ -67,7 +65,7 @@ export async function rescheduleBooking(bookingId: string, newDate: string, newT
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error("No autenticado")
 
-  const { data: booking, error: getError } = await (supabase.from("bookings") as any)
+  const { data: booking, error: getError } = await supabase.from("bookings")
     .select("*")
     .eq("id", bookingId)
     .eq("user_id", user.id)
@@ -81,7 +79,7 @@ export async function rescheduleBooking(bookingId: string, newDate: string, newT
   }
 
   // Verificar disponibilidad del nuevo slot
-  const { data: existingBookings } = await (supabase.from("bookings") as any)
+  const { data: existingBookings } = await supabase.from("bookings")
     .select("id")
     .eq("court_id", booking.court_id)
     .eq("booking_date", newDate)
@@ -94,7 +92,7 @@ export async function rescheduleBooking(bookingId: string, newDate: string, newT
   }
 
   // Actualizar la reserva
-  const { error: updateError } = await (supabase.from("bookings") as any)
+  const { error: updateError } = await supabase.from("bookings")
     .update({ 
       booking_date: newDate,
       start_time: newTime

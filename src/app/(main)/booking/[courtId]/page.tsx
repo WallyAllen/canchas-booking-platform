@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { BookingWizard } from "@/components/booking/booking-wizard"
@@ -27,7 +26,7 @@ export default async function BookingPage({
   }
 
   // 2. Obtener info de la cancha y el complejo
-  const { data: court, error: courtError } = await (supabase.from("courts") as any)
+  const { data: court, error: courtError } = await (supabase.from("courts"))
     .select("*, venues(*)")
     .eq("id", params.courtId)
     .single()
@@ -46,7 +45,7 @@ export default async function BookingPage({
   const dayOfWeek = bookingDate.getDay() // 0 = Domingo, 1 = Lunes...
   const timeStr = time.substring(0, 5) // HH:MM
 
-  const { data: rules } = await (supabase.from("pricing_rules") as any)
+  const { data: rules } = await (supabase.from("pricing_rules"))
     .select("*")
     .eq("court_id", court.id)
     .eq("day_of_week", dayOfWeek)
@@ -71,13 +70,13 @@ export default async function BookingPage({
   if (price === 0) price = 15000
 
   // 4. Verificar disponibilidad (que no exista un booking pagado/confirmado/pendiente para ese slot)
-  const { data: existingBookings } = await (supabase.from("bookings") as any)
+  const { data: existingBookings } = await (supabase.from("bookings"))
     .select("*")
     .eq("court_id", court.id)
     .eq("booking_date", date)
     .eq("start_time", `${timeStr}:00`)
     .neq("status", "cancelled")
-    
+
   let booking = existingBookings && existingBookings.length > 0 ? existingBookings[0] : null;
   const isAvailable = !booking || (booking.user_id === user.id && booking.payment_status === "pending");
 
@@ -102,7 +101,7 @@ export default async function BookingPage({
 
   if (!booking) {
     // 5. Generar un Booking temporal (Pending) para poder crear la preferencia de pago
-    const { data: newBooking, error: insertError } = await (supabase.from("bookings") as any)
+    const { data: newBooking, error: insertError } = await (supabase.from("bookings"))
       .insert({
         user_id: user.id,
         court_id: court.id,

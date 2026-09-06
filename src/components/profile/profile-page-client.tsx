@@ -46,12 +46,11 @@ export function ProfilePageClient() {
     setIsSaving(true)
     try {
             const { error } = await supabase.from("profiles")
-        // @ts-expect-error fix inference
         .update({
           full_name: formData.full_name,
           phone: formData.phone,
           updated_at: new Date().toISOString(),
-                  } as unknown)
+        })
         .eq("id", user.id)
 
       if (error) throw error

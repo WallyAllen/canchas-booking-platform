@@ -171,8 +171,7 @@ export function ReviewSection({ venueId, avgRating, reviewCount, reviews }: Revi
                     id="comment"
                     placeholder="El césped está en muy buen estado..."
                     value={comment}
-                    // @ts-expect-error fix inference
-                    onChange={(e: unknown) => setComment(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setComment(e.target.value)}
                     rows={4}
                   />
                 </div>
@@ -253,7 +252,7 @@ export function ReviewSection({ venueId, avgRating, reviewCount, reviews }: Revi
                 ))}
               </div>
             </div>
-            
+
             {review.comment && (
               <p className="mt-3 text-sm">{review.comment}</p>
             )}

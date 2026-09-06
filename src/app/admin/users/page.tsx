@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createClient } from "@/lib/supabase/server"
 import { redirect } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
@@ -12,7 +11,7 @@ export default async function AdminUsersPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect("/login")
 
-  const { data: users } = await (supabase.from("profiles") as any)
+  const { data: users } = await (supabase.from("profiles"))
     .select("*")
     .order("created_at", { ascending: false })
 
@@ -41,7 +40,7 @@ export default async function AdminUsersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/50">
-                {usersList.map((profile: any) => (
+                {usersList.map((profile: import("@/types/domain").Profile) => (
                   <tr key={profile.id} className="hover:bg-muted/30">
                     <td className="px-6 py-4">
                       <div className="font-bold">{profile.full_name || 'Sin Nombre'}</div>
@@ -57,7 +56,7 @@ export default async function AdminUsersPage() {
                       </Badge>
                     </td>
                     <td className="px-6 py-4 font-medium">
-                      ${profile.credits?.toLocaleString('es-AR') || 0}
+                      ${profile.credit_balance?.toLocaleString('es-AR') || 0}
                     </td>
                     <td className="px-6 py-4 text-muted-foreground">
                       {new Date(profile.created_at).toLocaleDateString('es-AR')}

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 "use server"
 
@@ -21,17 +20,17 @@ export async function createManualBooking(formData: FormData) {
   }
 
   // Verificar que la cancha pertenece al usuario
-  const { data: court } = await (supabase.from("courts") as any)
+  const { data: court } = await (supabase.from("courts"))
     .select("venue_id, venues!inner(owner_id)")
     .eq("id", courtId)
     .single()
 
-  if (!court || (court.venues as any).owner_id !== user.id) {
+  if (!court || (court.venues).owner_id !== user.id) {
     throw new Error("No autorizado")
   }
 
   // Insertar la reserva usando el ID del admin como `user_id` (ya que es obligatoria en schema actual)
-  const { error } = await (supabase.from("bookings") as any).insert({
+  const { error } = await (supabase.from("bookings")).insert({
     user_id: user.id,
     court_id: courtId,
     booking_date: date,

@@ -1,5 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable jsx-a11y/label-has-associated-control */
 "use client"
 import { useState, useEffect } from "react"
@@ -34,13 +32,14 @@ const DAYS = [
 export function OffersModal({ courtId, basePrice }: { courtId: string, basePrice: number }) {
   const [open, setOpen] = useState(false)
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [offers, setOffers] = useState<any[]>([])
+  const [offers, setOffers] = useState<{ id: string, day_of_week: string, start_time: string, end_time: string, discount_percentage: number }[]>([])
   const [loading, setLoading] = useState(false)
-  const supabase = createClient()
-
   useEffect(() => {
     if (open) {
+      // El cliente se crea acá adentro y no en el cuerpo del componente:
+      // createClient() devuelve un objeto nuevo en cada render, así que ponerlo
+      // en las dependencias del efecto lo dispararía en loop.
+      const supabase = createClient()
       setLoading(true);
       supabase.from("pricing_rules")
         .select("*")
@@ -48,8 +47,7 @@ export function OffersModal({ courtId, basePrice }: { courtId: string, basePrice
         .eq("is_promo_active", true)
         .then(({ data }) => {
           if (data) {
-            // @ts-expect-error fix inference
-            setOffers((data as import("@/types/domain").PricingRule[] | null)?.map((d: import("@/types/domain").PricingRule) => ({
+            setOffers(data.map((d: import("@/types/domain").PricingRule) => ({
               id: d.id,
               day_of_week: d.day_of_week.toString(),
               start_time: d.start_time.substring(0, 5),
@@ -82,8 +80,7 @@ export function OffersModal({ courtId, basePrice }: { courtId: string, basePrice
       await saveOffers(courtId, formData)
       setOpen(false)
     } catch (error: unknown) {
-      // @ts-expect-error fix inference
-      alert("Error: " + error.message)
+      alert("Error: " + (error instanceof Error ? error.message : String(error)))
     }
   }
 
@@ -112,7 +109,7 @@ export function OffersModal({ courtId, basePrice }: { courtId: string, basePrice
                   No hay ofertas activas.
                 </div>
               ) : (
-                offers.map((offer, index) => {
+                offers.map((offer) => {
                   const netPrice = basePrice * (1 - (offer.discount_percentage / 100))
                   return (
                     <div key={offer.id} className="p-3 border rounded-lg bg-card space-y-3 relative">

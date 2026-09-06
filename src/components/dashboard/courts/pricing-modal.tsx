@@ -17,8 +17,7 @@ export function PricingModal({ courtId, defaultPrice = 15000 }: { courtId: strin
       await updatePricing(courtId, new FormData(e.currentTarget))
       setOpen(false)
     } catch (error: unknown) {
-      // @ts-expect-error fix inference
-      alert("Error: " + error instanceof Error ? error.message : "Desconocido")
+      alert("Error: " + (error instanceof Error ? error.message : "Desconocido"))
     } finally {
       setLoading(false)
     }
