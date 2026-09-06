@@ -41,13 +41,22 @@ export async function cancelBooking(bookingId: string) {
   }
 
   // 5. Notificar
+  //
+  // Con `waitUntil` y no con `await`: desde que notify() dejó de esconderse en
+  // un setTimeout, esperarla dejaría al usuario mirando el spinner mientras
+  // responden Resend y WhatsApp, y una caída de esos servicios haría colgar la
+  // cancelación. waitUntil mantiene viva la función serverless hasta que el
+  // envío termine, sin retrasar la respuesta.
   const { notify } = await import('@/lib/notifications')
-  await notify('booking_cancelled', {
-    booking,
-    user: booking.profiles,
-    venue: booking.courts?.venues,
-    creditAmount: policy.creditAmount || 0
-  })
+  const { waitUntil } = await import('@vercel/functions')
+  waitUntil(
+    notify('booking_cancelled', {
+      booking,
+      user: booking.profiles,
+      venue: booking.courts?.venues,
+      creditAmount: policy.creditAmount || 0
+    })
+  )
 
   return { success: true, policy }
 }
