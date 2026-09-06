@@ -12,45 +12,43 @@ export async function sendWhatsAppBookingConfirmation(phone: string, booking: im
     return
   }
 
-  try {
-    const cleanPhone = phone.replace(/\D/g, '')
+  const cleanPhone = phone.replace(/\D/g, '')
 
-    // Asumimos que existe un template aprobado llamado "booking_confirmed"
-    const body = {
-      messaging_product: "whatsapp",
-      to: cleanPhone,
-      type: "template",
-      template: {
-        name: "booking_confirmed",
-        language: { code: "es_AR" },
-        components: [
-          {
-            type: "body",
-            parameters: [
-              { type: "text", text: venue.name },
-              { type: "text", text: new Date(`${booking.booking_date}T12:00:00`).toLocaleDateString('es-AR') },
-              { type: "text", text: booking.start_time.substring(0, 5) },
-              { type: "text", text: venue.address }
-            ]
-          }
-        ]
-      }
+  // Asumimos que existe un template aprobado llamado "booking_confirmed"
+  const body = {
+    messaging_product: "whatsapp",
+    to: cleanPhone,
+    type: "template",
+    template: {
+      name: "booking_confirmed",
+      language: { code: "es_AR" },
+      components: [
+        {
+          type: "body",
+          parameters: [
+            { type: "text", text: venue.name },
+            { type: "text", text: new Date(`${booking.booking_date}T12:00:00`).toLocaleDateString('es-AR') },
+            { type: "text", text: booking.start_time.substring(0, 5) },
+            { type: "text", text: venue.address }
+          ]
+        }
+      ]
     }
+  }
 
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${WHATSAPP_TOKEN}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(body)
-    })
+  const response = await fetch(API_URL, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${WHATSAPP_TOKEN}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body)
+  })
 
-    if (!response.ok) {
-      console.error('Error in WhatsApp API:', await response.text())
-    }
-  } catch (error) {
-    console.error('Error sending WhatsApp confirmation:', error)
+  if (!response.ok) {
+    // Se lanza en vez de loguear: con el outbox (migración 035), un error que
+    // no se propaga hace que la fila se marque 'sent' y nunca se reintente.
+    throw new Error(`WhatsApp API ${response.status}: ${await response.text()}`)
   }
 }
 
@@ -60,43 +58,41 @@ export async function sendWhatsAppReminder(phone: string, booking: import("@/typ
     return
   }
 
-  try {
-    const cleanPhone = phone.replace(/\D/g, '')
+  const cleanPhone = phone.replace(/\D/g, '')
 
-    // Asumimos que existe un template aprobado llamado "booking_reminder"
-    const body = {
-      messaging_product: "whatsapp",
-      to: cleanPhone,
-      type: "template",
-      template: {
-        name: "booking_reminder",
-        language: { code: "es_AR" },
-        components: [
-          {
-            type: "body",
-            parameters: [
-              { type: "text", text: venue.name },
-              { type: "text", text: booking.start_time.substring(0, 5) },
-              { type: "text", text: venue.address }
-            ]
-          }
-        ]
-      }
+  // Asumimos que existe un template aprobado llamado "booking_reminder"
+  const body = {
+    messaging_product: "whatsapp",
+    to: cleanPhone,
+    type: "template",
+    template: {
+      name: "booking_reminder",
+      language: { code: "es_AR" },
+      components: [
+        {
+          type: "body",
+          parameters: [
+            { type: "text", text: venue.name },
+            { type: "text", text: booking.start_time.substring(0, 5) },
+            { type: "text", text: venue.address }
+          ]
+        }
+      ]
     }
+  }
 
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${WHATSAPP_TOKEN}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(body)
-    })
+  const response = await fetch(API_URL, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${WHATSAPP_TOKEN}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body)
+  })
 
-    if (!response.ok) {
-      console.error('Error in WhatsApp API:', await response.text())
-    }
-  } catch (error) {
-    console.error('Error sending WhatsApp reminder:', error)
+  if (!response.ok) {
+    // Se lanza en vez de loguear: con el outbox (migración 035), un error que
+    // no se propaga hace que la fila se marque 'sent' y nunca se reintente.
+    throw new Error(`WhatsApp API ${response.status}: ${await response.text()}`)
   }
 }
