@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { createPaymentPreference } from '@/lib/mercadopago/client'
 import { createPendingBooking, BookingError } from '@/lib/booking/create-pending-booking'
+import { checkRateLimit, identityFrom, rateLimitedResponse } from '@/lib/rate-limit'
+import { CreatePendingBookingSchema, NonEmptyStringSchema } from '@/lib/utils/validators'
 
 export async function POST(request: Request) {
   try {
@@ -20,12 +22,29 @@ export async function POST(request: Request) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
 
-    const body = await request.json()
-    const { title, courtId, date, time } = body
+    // Cada llamada crea una reserva 'pending', y una pending ocupa el turno
+    // hasta que la limpie el cron. Sin límite, un script puede bloquear todas
+    // las canchas de la plataforma sin pagar nada.
+    const limit = await checkRateLimit({
+      action: 'create-preference',
+      identity: identityFrom(request, user.id),
+      limit: 5,
+      windowSeconds: 300
+    })
+    if (!limit.allowed) return rateLimitedResponse(limit.retryAfter)
 
-    if (!title || !courtId || !date || !time) {
-      return NextResponse.json({ error: 'Missing parameters' }, { status: 400 })
+    // Zod en vez de chequear que no sean undefined: valida además que courtId
+    // sea un UUID y que la fecha y la hora tengan formato, en vez de dejar que
+    // un valor mal formado llegue hasta la consulta a Postgres.
+    const body = await request.json()
+    const parsed = CreatePendingBookingSchema.extend({ title: NonEmptyStringSchema }).safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues[0]?.message ?? 'Parámetros inválidos' },
+        { status: 400 }
+      )
     }
+    const { title, courtId, date, time } = parsed.data
 
     const result = await createPendingBooking({
       courtId,

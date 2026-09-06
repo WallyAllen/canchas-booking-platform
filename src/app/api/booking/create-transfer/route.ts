@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { createPendingBooking, BookingError } from '@/lib/booking/create-pending-booking'
+import { checkRateLimit, identityFrom, rateLimitedResponse } from '@/lib/rate-limit'
+import { CreatePendingBookingSchema } from '@/lib/utils/validators'
 
 /**
  * Crea una reserva a pagar por transferencia bancaria.
@@ -15,12 +17,28 @@ export async function POST(request: Request) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
 
-    const body = await request.json()
-    const { courtId, date, time } = body
+    // Mismo riesgo que create-preference: cada llamada ocupa un turno. Acá la
+    // ventana de bloqueo es peor todavía, porque una reserva por transferencia
+    // sobrevive 3 horas antes de que el cron la levante (migración 029).
+    const limit = await checkRateLimit({
+      action: 'create-transfer',
+      identity: identityFrom(request, user.id),
+      limit: 5,
+      windowSeconds: 300
+    })
+    if (!limit.allowed) return rateLimitedResponse(limit.retryAfter)
 
-    if (!courtId || !date || !time) {
-      return NextResponse.json({ error: 'Faltan parámetros' }, { status: 400 })
+    // Zod en vez de chequear que no sean undefined: valida además que courtId
+    // sea un UUID y que la fecha y la hora tengan formato, en vez de dejar que
+    // un valor mal formado llegue hasta la consulta a Postgres.
+    const parsed = CreatePendingBookingSchema.safeParse(await request.json())
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues[0]?.message ?? 'Parámetros inválidos' },
+        { status: 400 }
+      )
     }
+    const { courtId, date, time } = parsed.data
 
     const result = await createPendingBooking({
       courtId,

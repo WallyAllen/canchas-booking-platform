@@ -577,6 +577,24 @@ export interface Database {
           }
         ]
       }
+      rate_limits: {
+        Row: {
+          key: string
+          window_start: string
+          count: number
+        }
+        Insert: {
+          key: string
+          window_start?: string
+          count?: number
+        }
+        Update: {
+          key?: string
+          window_start?: string
+          count?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -594,6 +612,20 @@ export interface Database {
       is_platform_admin: {
         Args: Record<PropertyKey, never>
         Returns: boolean
+      }
+      /** Migración 034: registra un intento y dice si excede el límite. */
+      check_rate_limit: {
+        Args: { p_key: string; p_limit: number; p_window_seconds: number }
+        Returns: {
+          allowed: boolean
+          remaining: number
+          retry_after: number
+        }[]
+      }
+      /** Migración 034: purga contadores de ventanas ya vencidas. */
+      cleanup_rate_limits: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
     }
     Enums: {

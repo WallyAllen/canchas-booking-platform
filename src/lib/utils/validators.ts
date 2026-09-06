@@ -21,16 +21,21 @@ export const PhoneSchema = z
 
 // ─── Business Domain Schemas ──────────────────────────────────────────────────
 
-/** Validates the input for creating a new booking hold */
-export const CreateBookingSchema = z.object({
+/**
+ * Payload real de `/api/booking/create-preference` y `/api/booking/create-transfer`.
+ *
+ * Acá no van ni el precio ni la seña a propósito. El esquema anterior
+ * (`CreateBookingSchema`) los pedía al cliente, que es exactamente el agujero que
+ * `createPendingBooking` evita calculándolos en el servidor contra las
+ * `pricing_rules` y el `deposit_percentage` del complejo. Se eliminó para que
+ * nadie lo adopte creyendo que refleja la API.
+ */
+export const CreatePendingBookingSchema = z.object({
   courtId: UUIDSchema,
-  bookingDate: DateSchema,
-  startTime: TimeSchema,
-  endTime: TimeSchema,
-  totalPrice: PositiveNumberSchema,
-  depositAmount: z.number().min(0, 'El depósito no puede ser negativo'),
+  date: DateSchema,
+  time: TimeSchema,
 })
-export type CreateBookingInput = z.infer<typeof CreateBookingSchema>
+export type CreatePendingBookingInput = z.infer<typeof CreatePendingBookingSchema>
 
 /** Validates the cancellation request from a user */
 export const CancelBookingSchema = z.object({
