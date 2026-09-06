@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge"
 
 export interface PricingRule {
   id: string
+  court_id: string
   court_name: string
   day_of_week: number
   start_time: string

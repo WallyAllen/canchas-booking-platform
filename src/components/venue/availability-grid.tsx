@@ -7,13 +7,22 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { CalendarIcon, Loader2, ChevronLeft, ChevronRight } from "lucide-react"
 import { CourtItem } from "./court-list"
+import type { PricingRule } from "./pricing-table"
 
 interface AvailabilityGridProps {
   venueId: string
   courts: CourtItem[]
+  /** Tarifas del complejo: definen qué horas se pueden reservar cada día. */
+  pricingRules: PricingRule[]
 }
 
-export function AvailabilityGrid({ venueId, courts }: AvailabilityGridProps) {
+/** "HH:MM[:SS]" -> minutos desde medianoche. */
+function toMinutes(hhmm: string) {
+  const [h, m] = hhmm.split(":")
+  return parseInt(h, 10) * 60 + parseInt(m ?? "0", 10)
+}
+
+export function AvailabilityGrid({ venueId, courts, pricingRules }: AvailabilityGridProps) {
   const router = useRouter()
   const supabase = createClient()
 
@@ -30,8 +39,27 @@ export function AvailabilityGrid({ venueId, courts }: AvailabilityGridProps) {
 
   const dateStr = getLocalDateString(selectedDate)
 
-  // Hardcode hours for MVP: 14:00 to 23:00 (10 slots of 1 hour)
-  const hours = Array.from({ length: 10 }, (_, i) => i + 14)
+  // Las horas salen de las tarifas cargadas, no de un rango fijo.
+  //
+  // Antes esto era `14:00 a 23:00` hardcodeado, y eso rompía por los dos lados:
+  // un complejo con tarifa desde las 10:00 no podía vender la mañana, y se
+  // ofrecían horarios sin tarifa que al reservarse fallaban, porque
+  // createPendingBooking rechaza un turno sin precio configurado.
+  const dayOfWeek = selectedDate.getDay()
+  const rulesForDay = pricingRules.filter((r) => r.day_of_week === dayOfWeek)
+
+  /** Un turno se puede reservar si su hora de inicio cae dentro de alguna tarifa. */
+  const courtCoversHour = (courtId: string, hour: number) =>
+    rulesForDay.some(
+      (r) =>
+        r.court_id === courtId &&
+        hour * 60 >= toMinutes(r.start_time) &&
+        hour * 60 < toMinutes(r.end_time)
+    )
+
+  const hours = Array.from({ length: 24 }, (_, h) => h).filter((h) =>
+    courts.some((c) => courtCoversHour(c.id, h))
+  )
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -95,14 +123,14 @@ export function AvailabilityGrid({ venueId, courts }: AvailabilityGridProps) {
         <h3 className="text-xl font-bold">Disponibilidad</h3>
 
         <div className="flex items-center gap-2 bg-muted p-1 rounded-lg">
-          <Button variant="ghost" size="icon" onClick={prevDay} disabled={isToday || loading} className="h-8 w-8">
+          <Button variant="ghost" size="icon" aria-label="Día anterior" onClick={prevDay} disabled={isToday || loading} className="h-8 w-8">
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <div className="flex items-center gap-2 px-4 py-1 text-sm font-medium capitalize min-w-[200px] justify-center">
             <CalendarIcon className="h-4 w-4 text-muted-foreground" />
             {displayDate}
           </div>
-          <Button variant="ghost" size="icon" onClick={nextDay} disabled={loading} className="h-8 w-8">
+          <Button variant="ghost" size="icon" aria-label="Día siguiente" onClick={nextDay} disabled={loading} className="h-8 w-8">
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
@@ -115,6 +143,16 @@ export function AvailabilityGrid({ venueId, courts }: AvailabilityGridProps) {
           </div>
         )}
 
+        {hours.length === 0 ? (
+          /* El complejo no cargó tarifas para este día de la semana. Sin esto la
+             grilla quedaba vacía y sin explicación. */
+          <div className="py-10 px-4 text-center">
+            <p className="font-medium">Sin turnos para este día</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              El complejo todavía no cargó tarifas para {displayDate.split(',')[0]}. Probá con otra fecha.
+            </p>
+          </div>
+        ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left border-collapse min-w-[800px]">
             <thead className="bg-muted/50 text-xs uppercase">
@@ -149,7 +187,11 @@ export function AvailabilityGrid({ venueId, courts }: AvailabilityGridProps) {
 
                     return (
                       <td key={hour} className="p-1 border-r border-border/50 last:border-0">
-                        {isPast ? (
+                        {!courtCoversHour(court.id, hour) ? (
+                          <span aria-label="Sin tarifa para este horario" className="h-10 w-full bg-muted/30 rounded flex items-center justify-center text-muted-foreground/40 text-xs">
+                            —
+                          </span>
+                        ) : isPast ? (
                           <button disabled aria-label="Turno pasado" className="h-10 w-full bg-muted/50 rounded flex items-center justify-center text-muted-foreground/50 text-xs cursor-not-allowed">
                             -
                           </button>
@@ -173,14 +215,23 @@ export function AvailabilityGrid({ venueId, courts }: AvailabilityGridProps) {
             </tbody>
           </table>
         </div>
+        )}
       </div>
 
-      <div className="flex items-center justify-end gap-4 text-xs text-muted-foreground">
+      <div className="flex flex-wrap items-center justify-end gap-4 text-xs text-muted-foreground">
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded bg-primary/20 border border-primary/30"></div> Libre
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded bg-red-500/10 border border-red-500/20"></div> Ocupado
+        </div>
+        {/* Estos dos estados se dibujaban pero no se explicaban: un usuario que
+            entraba de noche veía la grilla llena de guiones sin saber por qué. */}
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded bg-muted/50 border border-border"></div> Turno pasado
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded bg-muted/30 border border-border"></div> Sin tarifa
         </div>
       </div>
     </div>

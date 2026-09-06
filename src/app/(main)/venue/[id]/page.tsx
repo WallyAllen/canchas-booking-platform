@@ -43,7 +43,7 @@ const getVenueData = unstable_cache(
         .select("*, courts(name)")
         .in("court_id", courts.map(c => c.id))
 
-      const rulesData = rulesDataRaw as unknown as ({ id: string, day_of_week: number, start_time: string, end_time: string, price: number, promo_price: number | null, is_promo_active: boolean, courts: { name: string } | { name: string }[] | null })[] | null
+      const rulesData = rulesDataRaw as unknown as ({ id: string, court_id: string, day_of_week: number, start_time: string, end_time: string, price: number, promo_price: number | null, is_promo_active: boolean, courts: { name: string } | { name: string }[] | null })[] | null
 
       pricingRules = (rulesData || []).map((rule) => {
         let court_name = ""
@@ -56,6 +56,7 @@ const getVenueData = unstable_cache(
         }
         return {
           id: rule.id,
+          court_id: rule.court_id,
           court_name,
           day_of_week: rule.day_of_week,
           start_time: rule.start_time,
@@ -253,7 +254,7 @@ export default async function VenuePage({ params }: { params: { id: string } }) 
                 Cargando disponibilidad...
               </div>
             }>
-              <AvailabilityGrid venueId={venue.id} courts={courts} />
+              <AvailabilityGrid venueId={venue.id} courts={courts} pricingRules={pricingRules} />
             </Suspense>
           </section>
 
