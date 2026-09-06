@@ -1,6 +1,11 @@
 import { Search, CalendarCheck, Trophy } from "lucide-react"
 
-export function HowItWorks() {
+interface HowItWorksProps {
+  /** Sin token de Mercado Pago el único medio de pago es la transferencia. */
+  mercadoPagoHabilitado: boolean
+}
+
+export function HowItWorks({ mercadoPagoHabilitado }: HowItWorksProps) {
   const steps = [
     {
       icon: Search,
@@ -10,7 +15,9 @@ export function HowItWorks() {
     {
       icon: CalendarCheck,
       title: "2. Elegí horario y pagá",
-      description: "Seleccioná tu turno y aseguralo al instante abonando la seña con Mercado Pago."
+      description: mercadoPagoHabilitado
+        ? "Seleccioná tu turno y aseguralo al instante abonando la seña con Mercado Pago."
+        : "Seleccioná tu turno y aseguralo transfiriendo la seña al complejo."
     },
     {
       icon: Trophy,
