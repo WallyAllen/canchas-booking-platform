@@ -68,6 +68,8 @@ export interface Database {
           photos: string[] | null
           opening_hours: Json | null
           is_active: boolean
+          require_deposit: boolean
+          deposit_percentage: number
           avg_rating: number
           review_count: number
           created_at: string
@@ -87,6 +89,8 @@ export interface Database {
           photos?: string[] | null
           opening_hours?: Json | null
           is_active?: boolean
+          require_deposit?: boolean
+          deposit_percentage?: number
           avg_rating?: number
           review_count?: number
           created_at?: string
@@ -106,6 +110,8 @@ export interface Database {
           photos?: string[] | null
           opening_hours?: Json | null
           is_active?: boolean
+          require_deposit?: boolean
+          deposit_percentage?: number
           avg_rating?: number
           review_count?: number
           created_at?: string
@@ -256,13 +262,17 @@ export interface Database {
           start_time: string
           end_time: string
           total_price: number
-          deposit_amount: number
-          deposit_method: 'mercadopago' | 'transfer' | 'cash'
+          deposit_amount: number | null
+          deposit_method: 'mercadopago' | 'transfer' | 'cash' | null
           payment_status: 'pending' | 'awaiting_verification' | 'paid' | 'refunded' | 'credited'
           status: 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no_show'
           source: 'platform' | 'manual'
           mp_payment_id: string | null
+          manual_client_name: string | null
+          is_rescheduled: boolean
+          reminder_sent: boolean | null
           created_at: string
+          updated_at: string
           cancelled_at: string | null
           cancelled_reason: string | null
           transfer_reported_at: string | null
@@ -275,15 +285,20 @@ export interface Database {
           start_time: string
           end_time: string
           total_price: number
-          deposit_amount: number
-          deposit_method?: 'mercadopago' | 'transfer' | 'cash'
+          deposit_amount?: number | null
+          deposit_method?: 'mercadopago' | 'transfer' | 'cash' | null
           payment_status?: 'pending' | 'awaiting_verification' | 'paid' | 'refunded' | 'credited'
           status?: 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no_show'
           source?: 'platform' | 'manual'
           mp_payment_id?: string | null
+          manual_client_name?: string | null
+          is_rescheduled?: boolean
+          reminder_sent?: boolean | null
           created_at?: string
+          updated_at?: string
           cancelled_at?: string | null
           cancelled_reason?: string | null
+          transfer_reported_at?: string | null
         }
         Update: {
           id?: string
@@ -293,15 +308,20 @@ export interface Database {
           start_time?: string
           end_time?: string
           total_price?: number
-          deposit_amount?: number
-          deposit_method?: 'mercadopago' | 'transfer' | 'cash'
+          deposit_amount?: number | null
+          deposit_method?: 'mercadopago' | 'transfer' | 'cash' | null
           payment_status?: 'pending' | 'awaiting_verification' | 'paid' | 'refunded' | 'credited'
           status?: 'pending' | 'confirmed' | 'cancelled' | 'completed' | 'no_show'
           source?: 'platform' | 'manual'
           mp_payment_id?: string | null
+          manual_client_name?: string | null
+          is_rescheduled?: boolean
+          reminder_sent?: boolean | null
           created_at?: string
+          updated_at?: string
           cancelled_at?: string | null
           cancelled_reason?: string | null
+          transfer_reported_at?: string | null
         }
         Relationships: [
           {
@@ -383,27 +403,36 @@ export interface Database {
           id: string
           user_id: string
           booking_id: string
+          venue_id: string
           amount: number
           status: 'available' | 'used' | 'expired'
           expires_at: string
+          used_at: string | null
+          locked_for_booking_id: string | null
           created_at: string
         }
         Insert: {
           id?: string
           user_id: string
           booking_id: string
+          venue_id: string
           amount: number
           status?: 'available' | 'used' | 'expired'
           expires_at: string
+          used_at?: string | null
+          locked_for_booking_id?: string | null
           created_at?: string
         }
         Update: {
           id?: string
           user_id?: string
           booking_id?: string
+          venue_id?: string
           amount?: number
           status?: 'available' | 'used' | 'expired'
           expires_at?: string
+          used_at?: string | null
+          locked_for_booking_id?: string | null
           created_at?: string
         }
         Relationships: [
@@ -494,6 +523,7 @@ export interface Database {
           conversation_id: string
           sender_id: string
           content: string
+          image_url: string | null
           created_at: string
         }
         Insert: {
@@ -501,6 +531,7 @@ export interface Database {
           conversation_id: string
           sender_id: string
           content: string
+          image_url?: string | null
           created_at?: string
         }
         Update: {
@@ -508,6 +539,7 @@ export interface Database {
           conversation_id?: string
           sender_id?: string
           content?: string
+          image_url?: string | null
           created_at?: string
         }
         Relationships: [

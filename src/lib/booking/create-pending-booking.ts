@@ -71,10 +71,8 @@ export async function createPendingBooking(params: {
   }
 
   const venueId = court.venue_id as string
-  // @ts-expect-error fix inference
-  const requireDeposit = (court.venues?.require_deposit ?? true) as boolean
-  // @ts-expect-error fix inference
-  const depositPercentage = (court.venues?.deposit_percentage ?? 30) as number
+  const requireDeposit = court.venues?.require_deposit ?? true
+  const depositPercentage = court.venues?.deposit_percentage ?? 30
 
   const depositAmount = requireDeposit ? Math.ceil((price * depositPercentage) / 100) : 0
 

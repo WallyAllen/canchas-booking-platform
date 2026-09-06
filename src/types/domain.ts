@@ -1,11 +1,10 @@
 import { Database } from './database'
 
 export type Profile = Database['public']['Tables']['profiles']['Row']
-type VenueRow = Database['public']['Tables']['venues']['Row']
-export interface Venue extends VenueRow {
-  require_deposit?: boolean
-  deposit_percentage?: number
-}
+// `require_deposit` y `deposit_percentage` se redeclaraban acá como opcionales
+// porque faltaban en el tipo de la tabla (migración 007, nunca reflejada). Ya
+// están en `venues`, y son NOT NULL con default, así que el parche sobraba.
+export type Venue = Database['public']['Tables']['venues']['Row']
 export type Court = Database['public']['Tables']['courts']['Row']
 export type Booking = Database['public']['Tables']['bookings']['Row']
 export type PricingRule = Database['public']['Tables']['pricing_rules']['Row']
