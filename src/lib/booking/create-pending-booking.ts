@@ -79,8 +79,7 @@ export async function createPendingBooking(params: {
   const depositAmount = requireDeposit ? Math.ceil((price * depositPercentage) / 100) : 0
 
   const credits = await getAvailableCredits(userId, venueId)
-  const creditsApplied = depositAmount > 0 ? Math.min(credits, depositAmount) : 0
-  const amountToPay = Math.max(0, depositAmount - creditsApplied)
+  const intendedCredits = depositAmount > 0 ? Math.min(credits, depositAmount) : 0
 
   const { data: booking, error: insertError } = await adminSupabase.from('bookings')
     .insert({
@@ -108,9 +107,18 @@ export async function createPendingBooking(params: {
     throw new BookingError('Error creando reserva temporal', 500)
   }
 
-  if (creditsApplied > 0) {
-    await applyCredits(userId, booking.id, venueId, creditsApplied)
+  // El monto a cobrar sale de lo que applyCredits logró bloquear DE VERDAD, no
+  // de lo que había disponible al consultar. Entre las dos cosas puede perderse
+  // una carrera: si otra reserva concurrente se llevó el mismo crédito, esta
+  // tiene que cobrar la diferencia. Antes el retorno se descartaba y el usuario
+  // se llevaba el descuento igual.
+  let creditsApplied = 0
+  if (intendedCredits > 0) {
+    const notApplied = await applyCredits(userId, booking.id, venueId, intendedCredits)
+    creditsApplied = Math.max(0, intendedCredits - notApplied)
   }
+
+  const amountToPay = Math.max(0, depositAmount - creditsApplied)
 
   return {
     bookingId: booking.id,

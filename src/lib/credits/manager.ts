@@ -102,11 +102,22 @@ export async function getAvailableCredits(userId: string, venueId: string) {
 // migración 019, lo que permitía doble gasto entre dos reservas concurrentes).
 // Cada UPDATE es condicional a que el crédito siga sin bloquear — si dos
 // requests compiten por el mismo crédito, solo una lo gana.
+/** Los montos son DECIMAL(10,2): se redondea para no arrastrar ruido de punto flotante. */
+function round2(value: number) {
+  return Math.round(value * 100) / 100
+}
+
 export async function applyCredits(userId: string, bookingId: string, venueId: string, amountToApply: number) {
-  const supabase = await createClient()
+  // Admin client, no el del usuario. La migración 015 quitó la policy
+  // "Users can update their own credits" y la reemplazó por una solo para
+  // admins. Con el cliente del usuario, el UPDATE de abajo filtraba a 0 filas
+  // sin devolver error: no se bloqueaba ningún crédito, pero el descuento se
+  // aplicaba igual porque el monto a pagar se calcula aparte. El usuario pagaba
+  // menos y se quedaba con el crédito entero, reutilizable sin límite.
+  const supabase = createAdminClient()
   const now = new Date().toISOString()
 
-  const { data: credits, error } = await (supabase.from('credits') as any)
+  const { data: credits, error } = await supabase.from('credits')
     .select('*')
     .eq('user_id', userId)
     .eq('venue_id', venueId)
@@ -122,11 +133,9 @@ export async function applyCredits(userId: string, bookingId: string, venueId: s
   let remainingToApply = amountToApply
 
   for (const credit of credits) {
-    if (remainingToApply <= 0) break;
+    if (remainingToApply <= 0) break
 
-    // MVP: Consumimos el crédito completo.
-    // (Si un crédito es de $5000 y solo necesitás $3000, en este MVP se consume entero para simplificar)
-    const { data: locked } = await (supabase.from('credits') as any)
+    const { data: locked } = await supabase.from('credits')
       .update({ locked_for_booking_id: bookingId })
       .eq('id', credit.id)
       .eq('status', 'available')
@@ -135,7 +144,46 @@ export async function applyCredits(userId: string, bookingId: string, venueId: s
 
     if (!locked || locked.length === 0) continue // otro request se lo llevó primero
 
-    remainingToApply -= credit.amount
+    const lockedAmount = Number(locked[0].amount)
+
+    if (lockedAmount > remainingToApply) {
+      // El crédito vale más que lo que falta cubrir. Antes se consumía entero y
+      // la diferencia se perdía: con un crédito de $5000 y una seña de $3000, el
+      // usuario regalaba $2000. Se parte en dos y el excedente vuelve como
+      // crédito disponible, heredando vencimiento y complejo del original.
+      const leftover = round2(lockedAmount - remainingToApply)
+
+      // Se emite el excedente ANTES de achicar el original. Si algo falla entre
+      // las dos escrituras, el error queda a favor del usuario (crédito de más),
+      // que es el lado correcto para equivocarse cuando se trata de su plata.
+      const { error: leftoverError } = await supabase.from('credits').insert({
+        user_id: credit.user_id,
+        venue_id: credit.venue_id,
+        booking_id: credit.booking_id,
+        amount: leftover,
+        status: 'available',
+        expires_at: credit.expires_at
+      })
+
+      if (leftoverError) {
+        // No se parte: se prefiere dejar el crédito entero bloqueado (el usuario
+        // conserva el valor en la reserva) antes que achicarlo sin haber emitido
+        // el excedente, que sí perdería plata.
+        console.error('No se pudo emitir el crédito por el excedente:', leftoverError)
+      } else {
+        const { error: shrinkError } = await supabase.from('credits')
+          .update({ amount: remainingToApply })
+          .eq('id', credit.id)
+
+        if (shrinkError) {
+          console.error('No se pudo achicar el crédito partido:', shrinkError)
+        }
+      }
+
+      remainingToApply = 0
+    } else {
+      remainingToApply = round2(remainingToApply - lockedAmount)
+    }
   }
 
   return remainingToApply > 0 ? remainingToApply : 0
