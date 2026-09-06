@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { BookingWithDetails } from "@/types/domain"
-import Image from "next/image"
+import { VenueImage } from "@/components/venue/venue-image"
 import { redirect } from "next/navigation"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent } from "@/components/ui/card"
@@ -67,12 +67,10 @@ export default async function BookingsPage() {
         <div className="flex flex-col sm:flex-row h-full">
           <div className="hidden sm:block w-48 relative bg-muted shrink-0">
             {booking.courts.venues.photos && booking.courts.venues.photos[0] ? (
-              <Image 
-                src={booking.courts.venues.photos[0]} 
-                alt="Venue" 
-                fill
+              <VenueImage
+                src={booking.courts.venues.photos[0]}
+                alt={booking.courts.venues.name ?? 'Complejo'}
                 sizes="(max-width: 640px) 0vw, 192px"
-                className="object-cover"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center">⚽</div>
