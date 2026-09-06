@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import { Menu, User as UserIcon } from "lucide-react"
 
 import { useUser } from "@/hooks/useUser"
@@ -27,7 +27,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 export function Header() {
   const pathname = usePathname()
-  const router = useRouter()
   const { user, profile, isLoading, signOut } = useUser()
   const [isOpen, setIsOpen] = React.useState(false)
 
@@ -93,21 +92,13 @@ export function Header() {
                   </DropdownMenuLabel>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={() => router.push("/profile")}>
-                  Mi Perfil
-                </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => router.push("/bookings")}>
-                  Mis Reservas
-                </DropdownMenuItem>
+                <DropdownMenuItem render={<Link href="/profile" />}>Mi Perfil</DropdownMenuItem>
+                <DropdownMenuItem render={<Link href="/bookings" />}>Mis Reservas</DropdownMenuItem>
                 {(profile?.role === 'venue_admin' || profile?.role === 'platform_admin') && (
-                  <DropdownMenuItem onSelect={() => router.push("/dashboard")}>
-                    Panel de Cancha
-                  </DropdownMenuItem>
+                  <DropdownMenuItem render={<Link href="/dashboard" />}>Panel de Cancha</DropdownMenuItem>
                 )}
                 {profile?.role === 'platform_admin' && (
-                  <DropdownMenuItem onSelect={() => router.push("/admin")}>
-                    Panel Admin
-                  </DropdownMenuItem>
+                  <DropdownMenuItem render={<Link href="/admin" />}>Panel Admin</DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={signOut} className="text-destructive focus:bg-destructive focus:text-destructive-foreground">
