@@ -111,7 +111,10 @@ export default async function SearchPage({
         })
       })
 
-      if (venueMinPrice === Infinity) venueMinPrice = 0
+      // No se coerciona a 0: con Infinity/0 los complejos sin tarifas quedan
+      // fuera de los filtros de precio por sí solos, que es lo correcto. Y la
+      // tarjeta recibe null para mostrar "Consultar" en vez de "Desde $0".
+      const venueMinPriceDisplay = venueMinPrice === Infinity ? null : venueMinPrice
 
       const requireDepositFilter = searchParams.requireDeposit === 'true' ? true : searchParams.requireDeposit === 'false' ? false : null
 
@@ -133,7 +136,7 @@ export default async function SearchPage({
           featured_image: venue.photos?.[0] || null,
           latitude: venue.latitude,
           longitude: venue.longitude,
-          min_price: venueMinPrice,
+          min_price: venueMinPriceDisplay,
           court_types: Array.from(typesSet),
           require_deposit: venue.require_deposit ?? undefined
         })
@@ -145,10 +148,15 @@ export default async function SearchPage({
   const sortParam = typeof searchParams.sort === 'string' ? searchParams.sort : 'rating'
   
   filteredVenues.sort((a, b) => {
-    if (sortParam === 'price_asc') {
-      return a.min_price - b.min_price
-    } else if (sortParam === 'price_desc') {
-      return b.min_price - a.min_price
+    if (sortParam === 'price_asc' || sortParam === 'price_desc') {
+      // Un complejo sin tarifas cargadas no tiene con qué compararse: va al
+      // final en los dos sentidos. Antes valía 0 y encabezaba "más barato".
+      if (a.min_price === null && b.min_price === null) return 0
+      if (a.min_price === null) return 1
+      if (b.min_price === null) return -1
+      return sortParam === 'price_asc'
+        ? a.min_price - b.min_price
+        : b.min_price - a.min_price
     }
     // default to rating
     return b.avg_rating - a.avg_rating

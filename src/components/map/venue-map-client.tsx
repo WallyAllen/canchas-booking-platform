@@ -120,7 +120,9 @@ export default function VenueMapClient({ venues, hoveredVenueId }: VenueMapClien
                     <span>({venue.review_count})</span>
                   </div>
                   <p className="text-xs font-semibold text-primary mb-3">
-                    Desde ${venue.min_price.toLocaleString('es-AR')}
+                    {venue.min_price === null
+                      ? 'Consultar precio'
+                      : `Desde $${venue.min_price.toLocaleString('es-AR')}`}
                   </p>
                   <Button render={<Link href={`/venue/${venue.id}`} />} size="sm" className="w-full h-8 text-xs">
                     Ver complejo

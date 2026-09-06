@@ -64,11 +64,19 @@ export async function createPendingBooking(params: {
     .lte('start_time', `${time}:00`)
     .gte('end_time', `${time}:00`)
 
-  let price = 15000
-  if (rules && rules.length > 0) {
-    const rule = rules[0] as PricingRule
-    price = rule.is_promo_active && rule.promo_price ? rule.promo_price : rule.price
+  // Sin regla de precio para ese día y horario no se inventa un monto. El
+  // fallback anterior era `price = 15000`, y como las tarjetas muestran "$0"
+  // cuando no hay tarifas, el usuario veía gratis y se le cobraba $15.000 de un
+  // valor que no configuró nadie. Preferimos no vender el turno.
+  if (!rules || rules.length === 0) {
+    throw new BookingError(
+      'Este turno todavía no tiene tarifa configurada. Escribile al complejo para coordinarlo.',
+      409
+    )
   }
+
+  const rule = rules[0] as PricingRule
+  const price = rule.is_promo_active && rule.promo_price ? rule.promo_price : rule.price
 
   const venueId = court.venue_id as string
   const requireDeposit = court.venues?.require_deposit ?? true

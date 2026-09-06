@@ -12,7 +12,8 @@ export interface SearchVenueItem {
   featured_image: string | null
   latitude: number | null
   longitude: number | null
-  min_price: number
+  /** `null` cuando el complejo no tiene tarifas cargadas. */
+  min_price: number | null
   court_types: string[]
   require_deposit?: boolean
 }

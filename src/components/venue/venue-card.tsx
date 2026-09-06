@@ -19,7 +19,8 @@ export interface VenueCardProps {
     featured_image: string | null
     require_deposit?: boolean
   }
-  minPrice: number
+  /** `null` cuando el complejo no tiene tarifas cargadas. */
+  minPrice: number | null
   courtTypes: string[]
   className?: string
 }
@@ -74,8 +75,16 @@ export function VenueCard({ venue, minPrice, courtTypes, className }: VenueCardP
               </span>
             ) : <div />}
             <div className="flex items-center gap-1.5 ml-auto">
-              <span className="text-xs text-muted-foreground">Desde</span>
-              <span className="font-semibold text-base text-foreground leading-none">${minPrice.toLocaleString('es-AR')}</span>
+              {minPrice === null ? (
+                /* Sin tarifas cargadas no se inventa un precio: mostrar "$0" es
+                   publicidad falsa, porque el flujo de reserva sí cobra. */
+                <span className="text-sm font-medium text-muted-foreground leading-none">Consultar</span>
+              ) : (
+                <>
+                  <span className="text-xs text-muted-foreground">Desde</span>
+                  <span className="font-semibold text-base text-foreground leading-none">${minPrice.toLocaleString('es-AR')}</span>
+                </>
+              )}
             </div>
           </div>
         </CardContent>

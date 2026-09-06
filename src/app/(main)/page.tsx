@@ -51,6 +51,10 @@ type VenueQueryType = {
 export default async function HomePage() {
   const supabase = await createClient()
 
+  // Mismo criterio que usa /api/booking/create-preference para decidir si acepta
+  // pagos: sin token, Mercado Pago no está disponible y no hay que anunciarlo.
+  const mercadoPagoHabilitado = Boolean(process.env.MERCADOPAGO_ACCESS_TOKEN)
+
   // 1. Fetch Promos
   // Note: we fetch today's day of week or just active promos. For simplicity, we just fetch active promos.
   const { data: promoData } = await supabase
@@ -144,16 +148,23 @@ export default async function HomePage() {
           {/* Buscador */}
           <HeroSearch />
 
-          {/* Trust Signals */}
+          {/* Trust Signals
+              Solo se anuncia Mercado Pago si está realmente habilitado. Sin el
+              token, /api/booking/create-preference responde 503 y el único medio
+              de pago es la transferencia: prometerlo en la portada mandaba al
+              usuario a un callejón sin salida. */}
           <div className="mt-10 flex flex-col items-center">
-            <p className="text-xs text-muted-foreground mb-3 font-semibold uppercase tracking-widest text-zinc-400">Pagos 100% seguros con</p>
-            <div className="flex gap-4 items-center">
-              {/* Fallback to simple text/CSS instead of external image for Mercado Pago */}
-              <div className="flex items-center px-3 py-1 bg-white rounded shadow-sm opacity-80 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-300">
-                <span className="font-bold text-[#009EE3]">mercado</span>
-                <span className="font-bold text-[#004481]">pago</span>
+            <p className="text-xs text-muted-foreground mb-3 font-semibold uppercase tracking-widest text-zinc-400">
+              {mercadoPagoHabilitado ? 'Pagos 100% seguros con' : 'Reservá con transferencia bancaria'}
+            </p>
+            {mercadoPagoHabilitado && (
+              <div className="flex gap-4 items-center">
+                <div className="flex items-center px-3 py-1 bg-white rounded shadow-sm opacity-80 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-300">
+                  <span className="font-bold text-[#009EE3]">mercado</span>
+                  <span className="font-bold text-[#004481]">pago</span>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </section>
@@ -219,7 +230,9 @@ export default async function HomePage() {
                 })
               })
               
-              if (minPrice === Infinity) minPrice = 0
+              // Sin tarifas cargadas queda null y la tarjeta muestra "Consultar".
+              // Coercionar a 0 mostraba "Desde $0" en complejos que igual cobran.
+              const minPriceDisplay = minPrice === Infinity ? null : minPrice
 
               const courtTypes = Array.from(typesSet)
 
@@ -238,7 +251,7 @@ export default async function HomePage() {
                 <VenueCard 
                   key={venue.id}
                   venue={venueProps}
-                  minPrice={minPrice}
+                  minPrice={minPriceDisplay}
                   courtTypes={courtTypes}
                 />
               )
@@ -254,7 +267,7 @@ export default async function HomePage() {
       </section>
 
       {/* d) ¿Cómo Funciona? */}
-      <HowItWorks />
+      <HowItWorks mercadoPagoHabilitado={mercadoPagoHabilitado} />
 
       {/* e) CTA para Dueños */}
       <section className="py-16 md:py-24 container px-4 md:px-8">
