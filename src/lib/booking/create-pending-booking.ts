@@ -96,9 +96,54 @@ export async function createPendingBooking(params: {
     .single()
 
   if (insertError || !booking) {
-    // El índice único (court_id, booking_date, start_time) es la defensa real
-    // contra doble reserva; si saltó, el turno se tomó mientras tanto.
+    // El índice único parcial (court_id, booking_date, start_time) es la defensa
+    // real contra doble reserva. Pero que haya saltado no significa que el turno
+    // lo tenga otro: lo más común es que sea una reserva pendiente del MISMO
+    // usuario, de un intento anterior que no llegó a pagarse.
+    //
+    // Eso pasaba, por ejemplo, si volvía atrás desde la pantalla de transferencia
+    // y reintentaba. Y era una trampa sin salida: la reserva pendiente por
+    // transferencia vive 3 horas antes de que la levante el cron (migración 029),
+    // así que el usuario quedaba sin poder reservar su propio turno durante todo
+    // ese rato, viendo "Ese turno ya fue reservado" sobre algo que había
+    // reservado él.
+    //
+    // Si el turno lo tiene su propia reserva pendiente, se reutiliza en vez de
+    // fallar: es exactamente la reserva que estaba tratando de crear.
     if (insertError?.code === '23505') {
+      const { data: existing } = await adminSupabase.from('bookings')
+        .select('id, user_id, status, payment_status')
+        .eq('court_id', courtId)
+        .eq('booking_date', date)
+        .eq('start_time', `${time}:00`)
+        .neq('status', 'cancelled')
+        .maybeSingle()
+
+      const esPropiaYPendiente =
+        existing?.user_id === userId &&
+        existing?.status === 'pending' &&
+        (existing?.payment_status === 'pending' || existing?.payment_status === 'awaiting_verification')
+
+      if (existing && esPropiaYPendiente) {
+        // Los créditos ya quedaron bloqueados contra esta reserva en el intento
+        // anterior. Se leen en vez de volver a aplicarlos, porque aplicarlos de
+        // nuevo bloquearía créditos de más.
+        const { data: locked } = await adminSupabase.from('credits')
+          .select('amount')
+          .eq('locked_for_booking_id', existing.id)
+
+        const yaBloqueado = (locked ?? []).reduce((acc, c) => acc + Number(c.amount), 0)
+
+        return {
+          bookingId: existing.id,
+          venueId,
+          price,
+          depositAmount,
+          amountToPay: Math.max(0, depositAmount - yaBloqueado),
+          creditsApplied: yaBloqueado
+        }
+      }
+
       throw new BookingError('Ese turno ya fue reservado', 409)
     }
     console.error('Error creando reserva pendiente:', insertError)
