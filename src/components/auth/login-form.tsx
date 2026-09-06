@@ -126,7 +126,7 @@ function LoginForm() {
             Al continuar, aceptás los{" "}
             <Link href="/terminos" className="underline hover:text-foreground transition-colors">Términos y Condiciones</Link>
             {" "}y la{" "}
-            <Link href="/terminos" className="underline hover:text-foreground transition-colors">Política de Privacidad</Link>
+            <Link href="/privacidad" className="underline hover:text-foreground transition-colors">Política de Privacidad</Link>
             .
           </p>
         </CardFooter>
