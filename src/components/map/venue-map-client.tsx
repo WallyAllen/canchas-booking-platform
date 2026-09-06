@@ -46,30 +46,65 @@ interface VenueMapClientProps {
   hoveredVenueId?: string | null
 }
 
-// Component to dynamically adjust map bounds based on markers
+/**
+ * Encuadra el mapa sobre los complejos y lo re-mide cuando cambia de tamaño.
+ *
+ * El re-medir no es un adorno. En /search el panel del mapa se alterna con
+ * `hidden` / `flex` (search-layout.tsx), y el componente queda MONTADO mientras
+ * está oculto: Leaflet lo mide 0x0, pide un solo tile y se queda así. Al pasar a
+ * la vista de mapa el contenedor ya tiene tamaño, pero Leaflet sigue creyendo que
+ * mide cero, así que muestra un mapa en blanco — el síntoma de "el mapa nunca
+ * termina de cargar".
+ *
+ * `invalidateSize()` es la forma que da Leaflet de decirle que vuelva a medirse.
+ * Se dispara con un ResizeObserver sobre el contenedor, así cubre tanto el toggle
+ * de vista como rotar el teléfono o redimensionar la ventana.
+ */
 function MapBounds({ venues, userLocation }: { venues: SearchVenueItem[], userLocation: { lat: number, lng: number } | null }) {
   const map = useMap()
-  
+
   useEffect(() => {
-    if (venues.length === 0 && !userLocation) return
-    
-    const bounds = L.latLngBounds([])
-    
-    venues.forEach(v => {
-      if (v.latitude && v.longitude) {
-        bounds.extend([v.latitude, v.longitude])
+    const encuadrar = () => {
+      if (venues.length === 0 && !userLocation) return
+
+      const bounds = L.latLngBounds([])
+
+      venues.forEach(v => {
+        if (v.latitude && v.longitude) {
+          bounds.extend([v.latitude, v.longitude])
+        }
+      })
+
+      if (userLocation) {
+        bounds.extend([userLocation.lat, userLocation.lng])
       }
+
+      if (bounds.isValid()) {
+        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 })
+      }
+    }
+
+    encuadrar()
+
+    const contenedor = map.getContainer()
+    let anchoPrevio = contenedor.clientWidth
+
+    const observer = new ResizeObserver(() => {
+      const ancho = contenedor.clientWidth
+      if (ancho === 0) return
+
+      map.invalidateSize()
+
+      // Si venía de estar oculto, el encuadre anterior se calculó contra un
+      // viewport de 0px y quedó inservible: hay que rehacerlo.
+      if (anchoPrevio === 0) encuadrar()
+      anchoPrevio = ancho
     })
-    
-    if (userLocation) {
-      bounds.extend([userLocation.lat, userLocation.lng])
-    }
-    
-    if (bounds.isValid()) {
-      map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 })
-    }
+
+    observer.observe(contenedor)
+    return () => observer.disconnect()
   }, [venues, userLocation, map])
-  
+
   return null
 }
 
