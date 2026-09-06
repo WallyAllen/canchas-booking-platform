@@ -609,6 +609,42 @@ export interface Database {
           }
         ]
       }
+      notification_outbox: {
+        Row: {
+          id: string
+          event: 'booking_confirmed' | 'booking_reminder' | 'booking_cancelled' | 'welcome'
+          payload: Json
+          status: 'pending' | 'sent' | 'failed'
+          attempts: number
+          last_error: string | null
+          next_attempt_at: string
+          created_at: string
+          sent_at: string | null
+        }
+        Insert: {
+          id?: string
+          event: 'booking_confirmed' | 'booking_reminder' | 'booking_cancelled' | 'welcome'
+          payload: Json
+          status?: 'pending' | 'sent' | 'failed'
+          attempts?: number
+          last_error?: string | null
+          next_attempt_at?: string
+          created_at?: string
+          sent_at?: string | null
+        }
+        Update: {
+          id?: string
+          event?: 'booking_confirmed' | 'booking_reminder' | 'booking_cancelled' | 'welcome'
+          payload?: Json
+          status?: 'pending' | 'sent' | 'failed'
+          attempts?: number
+          last_error?: string | null
+          next_attempt_at?: string
+          created_at?: string
+          sent_at?: string | null
+        }
+        Relationships: []
+      }
       rate_limits: {
         Row: {
           key: string

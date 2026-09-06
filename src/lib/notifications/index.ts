@@ -1,67 +1,24 @@
+import { encolarYEnviar } from './outbox'
+import type { NotificationEvent, NotificationPayload } from './deliver'
 
-import {
-  sendBookingConfirmation,
-  sendBookingReminder,
-  sendBookingCancellation,
-  sendWelcomeEmail
-} from './email'
-import {
-  sendWhatsAppBookingConfirmation,
-  sendWhatsAppReminder
-} from './whatsapp'
-
-type EventType = 'booking_confirmed' | 'booking_reminder' | 'booking_cancelled' | 'welcome'
+export type { NotificationEvent, NotificationPayload }
 
 /**
- * Dispatcher centralizado de notificaciones.
+ * Dispatcher de notificaciones.
  *
- * Antes el cuerpo corría dentro de un `setTimeout(..., 0)` y la función retornaba
- * de inmediato. En serverless eso no es "no bloqueante": es no ejecutarse. Una
- * vez enviada la respuesta HTTP, la plataforma puede congelar o terminar la
- * instancia, y el callback pendiente nunca corre. Peor todavía, el webhook de
- * Mercado Pago lo envolvía en `waitUntil(notify(...))` justamente para evitar
- * eso — pero recibía una promesa ya resuelta, así que no mantenía nada vivo.
+ * Registra el envío en `notification_outbox` y lo intenta una vez. Si el intento
+ * falla, la fila queda pendiente y /api/cron/notifications la reintenta con
+ * backoff hasta 5 veces. Antes un fallo de Resend o WhatsApp se perdía en un
+ * console.error y el usuario nunca recibía su confirmación.
  *
- * Ahora el trabajo ocurre en la promesa que se devuelve, y `waitUntil` cumple su
- * función. La promesa **nunca rechaza**: un fallo de Resend o de WhatsApp no
- * puede tumbar la confirmación de una reserva. Quien la llame decide si esperarla
- * (`await`) o delegarla a la plataforma (`waitUntil`).
+ * Nunca rechaza: un problema de notificación no puede tumbar la confirmación de
+ * una reserva. Quien llame decide si esperarla (`await`) o dejarla en manos de la
+ * plataforma (`waitUntil`).
  */
-export async function notify(
-  event: EventType,
-  data: {
-    user?: import("@/types/domain").Profile & { email?: string; phone?: string | null };
-    booking?: import("@/types/domain").Booking;
-    venue?: import("@/types/domain").Venue;
-    creditAmount?: number;
-  }
-) {
+export async function notify(event: NotificationEvent, data: NotificationPayload) {
   try {
-    switch (event) {
-      case 'welcome':
-        await sendWelcomeEmail(data.user!)
-        break
-
-      case 'booking_confirmed':
-        await Promise.allSettled([
-          sendBookingConfirmation(data.booking!, data.user!, data.venue!),
-          sendWhatsAppBookingConfirmation(data.user!.phone!, data.booking!, data.venue!)
-        ])
-        break
-
-      case 'booking_reminder':
-        await Promise.allSettled([
-          sendBookingReminder(data.booking!, data.user!, data.venue!),
-          sendWhatsAppReminder(data.user!.phone!, data.booking!, data.venue!)
-        ])
-        break
-
-      case 'booking_cancelled':
-        // Solo mandamos mail para cancelaciones
-        await sendBookingCancellation(data.booking!, data.user!, data.venue!, data.creditAmount)
-        break
-    }
+    await encolarYEnviar(event, data)
   } catch (error) {
-    console.error(`Error in notification dispatcher for event ${event}:`, error)
+    console.error(`[notify] error inesperado despachando ${event}:`, error)
   }
 }
