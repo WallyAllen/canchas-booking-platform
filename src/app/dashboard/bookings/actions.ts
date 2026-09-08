@@ -4,6 +4,7 @@
 import { createClient, createAdminClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import { consumeLockedCredits } from "@/lib/credits/manager"
+import { avisarPorChat, mensajeReservaConfirmada, mensajeTransferenciaRechazada } from "@/lib/notifications/in-app"
 
 async function assertOwnsBooking(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -73,9 +74,11 @@ export async function confirmTransferPayment(bookingId: string) {
 
   await assertOwnsBooking(supabase, bookingId, user.id)
 
-  const { error } = await supabase.from("bookings")
+  const { data: booking, error } = await supabase.from("bookings")
     .update({ payment_status: 'paid', status: 'confirmed' })
     .eq("id", bookingId)
+    .select('user_id, booking_date, start_time, courts(venues(id, name, owner_id))')
+    .single()
 
   if (error) {
     throw new Error(error.message)
@@ -83,6 +86,19 @@ export async function confirmTransferPayment(bookingId: string) {
 
   // Los créditos que se hubieran bloqueado al reservar ya se usaron.
   await consumeLockedCredits(bookingId).catch(console.error)
+
+  // Avisarle al usuario que su transferencia fue verificada.
+  //
+  // Este es el único momento en que una reserva por transferencia queda
+  // confirmada, y no notificaba nada: el usuario transfería, esperaba, y se
+  // enteraba solo si volvía a entrar a "Mis Reservas".
+  //
+  // Va por el chat y no por mail a propósito: el comprobante lo subió por acá,
+  // así que es donde está mirando, y no depende de configurar un proveedor de
+  // correo ni de verificar un dominio para funcionar.
+  if (booking) {
+    await avisarPorChat(booking, mensajeReservaConfirmada(booking))
+  }
 
   revalidatePath("/dashboard/bookings")
   revalidatePath("/dashboard/schedule")
@@ -100,12 +116,20 @@ export async function rejectTransferPayment(bookingId: string) {
 
   await assertOwnsBooking(supabase, bookingId, user.id)
 
-  const { error } = await supabase.from("bookings")
+  const { data: booking, error } = await supabase.from("bookings")
     .update({ status: 'cancelled', payment_status: 'pending', cancelled_at: new Date().toISOString() })
     .eq("id", bookingId)
+    .select('user_id, booking_date, start_time, courts(venues(id, name, owner_id))')
+    .single()
 
   if (error) {
     throw new Error(error.message)
+  }
+
+  // Un rechazo sin aviso es peor que una confirmación sin aviso: el usuario cree
+  // que tiene el turno y se entera el día del partido.
+  if (booking) {
+    await avisarPorChat(booking, mensajeTransferenciaRechazada(booking))
   }
 
   const adminSupabase = createAdminClient()
